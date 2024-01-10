@@ -46,7 +46,7 @@ class StaticString:
         self.REVOKE_SUCCESS = "ok, revoke successfully!";
 
         # 存储路径
-        # self.PATH_ROOT = "F:/DBMS/"
+        # self.PATH_ROOT = "./DBMS/"
         # self.PATH_CONFIG = self.PATH_ROOT + "./config/"
         # self.PATH_USERS = self.PATH_CONFIG + "./users.json"
         # self.PATH_DICTIONARY = self.PATH_CONFIG + "./dictionary.json"
