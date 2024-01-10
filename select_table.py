@@ -1,7 +1,7 @@
 import json
 import os
 
-import PrettyTable
+from prettytable import PrettyTable
 
 from staticString import StaticString
 
@@ -14,12 +14,12 @@ def select(table_name, static_string):
         with open(table_file) as f:
             response = json.load(f)
     table = PrettyTable()
-    table.filed_name = ['id', 'name', 'age']
+    fieldName = ['id', 'name', 'age']
+    table.field_names = (fieldName)
     for row in response:
-        for column in row.values():
-            table.add_row(column)
+        values = list(row.values())
+        table.add_row(values)
     print(table)
-
 
 
 staticString = StaticString()
