@@ -1,5 +1,6 @@
 import json
 import os
+#from prettytable import PrettyTable
 
 def select(table_name, static_string):
     table_file = f'./{table_name}.json'
