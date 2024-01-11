@@ -43,7 +43,7 @@ class StaticString:
         self.RECORD_DELETE_SUCCESS = "ok, a record is deleted successfully!"
         self.UPDATE_SUCCESS = "ok, update successfully!"
         self.GRANT_SUCCESS = "ok, grant successfully!"
-        self.REVOKE_SUCCESS = "ok, revoke successfully!";
+        self.REVOKE_SUCCESS = "ok, revoke successfully!"
 
         # 存储路径
         # self.PATH_ROOT = "./DBMS/"
