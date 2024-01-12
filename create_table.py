@@ -47,7 +47,7 @@ def add_record(table_name, values):
     else:
         print(f'Table {table_name} does not exist')
 
-def main():
+def create_table_main():
     while True:
         user_input = input("Enter command: ")
         parts = user_input.split()

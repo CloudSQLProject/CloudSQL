@@ -1,8 +1,8 @@
 import json
 import os
-
+from create_table import *
 loginFlag = False
-from create_table import create_table,add_record
+
 
 def create_user_database():
     if not os.path.exists('./users.json'):
@@ -87,27 +87,27 @@ if __name__ == "__main__":
     create_user_database()
     while True:
         command = input()
-        if command.startswith("login"):
+        if command.startswith("login"): #登录
             _, username, password = command.split()
             loginFlag, user_type = login(username, password)
             if loginFlag:
                 print('Welcome to the database')
 
-        elif command.startswith("add_user"):
+        elif command.startswith("add_user"): #添加用户
             _, username, password = command.split()
             add_user(username, password)
 
-        elif command.startswith("grant"):
+        elif command.startswith("grant"): #赋予权限
             _, username = command.split()
             grant_authorization(username)
 
-        elif command.startswith("drop"):
+        elif command.startswith("drop"): #删除用户
             _, username = command.split()
             drop(username)
 
-
-
-
-        elif command.startswith("exit"):
+        elif command.startswith("exit"): #退出
             loginFlag = False
             break
+
+        elif command.startswith("table"):
+            create_table_main()
