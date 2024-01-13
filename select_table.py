@@ -34,25 +34,8 @@ def draw_table(data, keys, max_lengths):
         #print(separator)
 
 
-def select_all(table_name,static_string):
-    table_file = f'./{table_name}.json'
-    if not os.path.exists(table_file):
-        print(static_string.TABLE_NOT_EXIST)
-        return []
-    else:
-        with open(table_file) as f:
-            response = json.load(f)
-    if len(response) == 0:
-        print("Table is empty")
-        return
-    keys = response[0].keys()
-    max_lengths = [len(str(key)) for key in keys]
-    rows = []
-    for row in response:
-        values = list(row.values())
-        rows.append(values)
-        max_lengths = [max(max_lengths[i], len(str(values[i]))) for i in range(len(values))]
-    draw_table(rows, keys, max_lengths)
+def select_all(table_name,where_condition):
+    return select_column(table_name,table_columns[table_name],where_condition)
 
 
 def select_column(table_name, aim, where_condition):
@@ -112,7 +95,7 @@ def main():
         aim,table,where_condition= get_user_input(user_input)
         #print(aim,table,where_condition)
         if aim == ['*']:
-            select_all(table,static_string)
+            select_all(table,where_condition)
         else:
             select_column(table,aim,where_condition)
 
