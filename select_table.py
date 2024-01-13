@@ -1,15 +1,18 @@
 import json
 import os
+import re
+
 import static_string
 from shared_data import table_keys,table_columns
 
+conditions = []
 
-class StaticString:
-    TABLE_NOT_EXIST = "Table does not exist"
-staticString = StaticString()
-
+def parse_where_conditions(where_condition):
+    conditions = re.split(r'\b(?: and | or )\b', where_condition)
+    return conditions
 
 def get_user_input(user_input):
+    global conditions
     parts = user_input.split(' ')
     if len(parts) < 4 or parts[0].lower() != 'select' or parts[2].lower() != 'from':
         print("Invalid command")
@@ -20,7 +23,9 @@ def get_user_input(user_input):
         where_condition = None
         if len(parts)>4 and parts[4].lower() == 'where':
             where_condition = ' '.join(parts[5:])
-        return aim,table,where_condition
+            conditions = parse_where_conditions(where_condition)
+            #print(conditions)
+        return aim,table,conditions
 
 def draw_table(data, keys, max_lengths):
     header = "|".join([f"{key:<{max_lengths[i]}}" for i, key in enumerate(keys)])
@@ -60,9 +65,14 @@ def select_column(table_name, aim, where_condition):
 
         result = []
         if where_condition:
-            condition_key, condition_value = where_condition.split('==')
             for row in response:
-                if condition_key in row and str(row[condition_key]) == condition_value:
+                condition_met = True
+                for condition in where_condition:
+                    condition_key, condition_value = condition.split('=')
+                    if row.get(condition_key) != condition_value:
+                        condition_met = False
+                        break
+                if condition_met:
                     entry = {}
                     for key in aim:
                         if key in row:
@@ -90,7 +100,10 @@ def select_column(table_name, aim, where_condition):
 
 
 def main():
+    global conditions
+    conditions = []
     while True:
+        conditions = []
         user_input = input("Enter Command: ")
         aim,table,where_condition= get_user_input(user_input)
         #print(aim,table,where_condition)
