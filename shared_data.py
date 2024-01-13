@@ -1,2 +1,2 @@
-table_columns = {}
-table_keys = {}
+table_columns = {'student': ['id', 'name', 'age', 'location']}
+table_keys = {'student': 'id'}
