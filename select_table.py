@@ -1,6 +1,8 @@
 import json
 import os
 import static_string
+from shared_data import table_keys,table_columns
+
 
 class StaticString:
     TABLE_NOT_EXIST = "Table does not exist"
@@ -51,8 +53,12 @@ def select_all(table_name,static_string):
 
 
 def select_column(table_name,aim):
-    if 'id' not in aim:
-        aim.insert(0, 'id') #这里的id就是主键，以后改
+    if table_name in table_keys:
+        primary_key = table_keys[table_name]
+        if primary_key not in aim:
+            aim.insert(0, primary_key)
+    else:
+        print(f"Error: Table {table_name} not found in table_keys")
 
     table_file = f'./{table_name}.json'
     if not os.path.exists(table_file):
@@ -94,4 +100,6 @@ def main():
 
 
 if __name__ == "__main__":
+    print(table_keys)
+    print(table_columns)
     main()

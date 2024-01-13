@@ -1,6 +1,7 @@
 import json
 import os
 
+table_keys = {}
 table_columns = {}
 
 def create_table(table_name, *columns):
@@ -12,11 +13,22 @@ def create_table(table_name, *columns):
         columns = [column.strip(',') for col_group in columns for column in col_group.split(',')]
         print(f'Table {table_name} created successfully with columns: {columns}')
         global table_columns
+        global table_keys
         table_columns[table_name] = columns
-        #print(table_columns[table_name])
+        primary_key = input("Enter the primary key for the table: ")
+        if primary_key not in columns:
+            print("Primary key does not exist in the table columns")
+            os.remove(table_file)
+            return
+        table_keys[table_name] = primary_key
         #print(table_columns)
+        #print(table_keys)
     else:
         print(f'Table {table_name} already exists')
+
+    with open('shared_data.py', 'w') as f:
+        f.write(f"table_columns = {table_columns}\n")
+        f.write(f"table_keys = {table_keys}\n")
 
 def add_record(table_name, values):
     table_file = f'./{table_name}.json'
@@ -58,3 +70,6 @@ def create_table_main():
             add_record(table_name, values)
         else:
             print('Invalid command')
+
+if __name__ == '__main__':
+    create_table_main()
