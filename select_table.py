@@ -1,8 +1,6 @@
 import json
 import os
 import re
-
-import staticString
 from shared_data import table_keys,table_columns
 
 conditions = []
