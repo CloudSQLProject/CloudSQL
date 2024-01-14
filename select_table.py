@@ -2,7 +2,7 @@ import json
 import os
 import re
 
-import static_string
+import staticString
 from shared_data import table_keys,table_columns
 
 conditions = []
