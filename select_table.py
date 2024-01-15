@@ -120,9 +120,6 @@ def select_column(table_name, aim, where_condition):
 
     with open(table_file) as f:
         response = json.load(f)
-        print("--------------------------------")
-        print(response)
-        print("--------------------------------")
         if len(response) == 0:
             print("Table is empty")
             return []
