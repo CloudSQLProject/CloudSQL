@@ -51,6 +51,21 @@ def get_user_input(user_input):
             print(conditions)
         return aim,table,conditions
 
+def get_user_input_join(user_input):
+    global conditions
+    select_match = re.search(r'select (.*?) from', user_input, re.I)
+    where_match = re.search(r'where (.*)', user_input, re.I)
+
+    if select_match and where_match:
+        aim = select_match.group(1).split(',')
+        where_condition = where_match.group(1)
+        conditions = parse_where_conditions(where_condition)
+        print(conditions)
+        return aim, conditions
+    else:
+        print("Invalid command")
+        return None, None
+
 
 def inner_join(table1, table2, join_key):
     with open(f'{table1}.json') as f1, open(f'{table2}.json') as f2:
@@ -82,44 +97,11 @@ def select_all(table_name,where_condition):
     return select_column(table_name,table_columns[table_name],where_condition)
 
 
-def select_column_innerjoin(response,aim,where_condition):
-    print(response)
 
-    if len(response) == 0:
-        print("Table is empty")
-        return []
 
-    result = []
-    if where_condition:
-        for row in response:
-            condition_met = False
-            for sub_conditions in where_condition:
-                sub_condition_met = any(apply_condition(row, condition) for condition in sub_conditions)
-                if sub_condition_met:
-                    condition_met = True
-                    break
-            if condition_met:
-                entry = {}
-                for key in aim:
-                    if key in row:
-                        entry[key] = row[key]
-                result.append(entry)
-    else:
-        for row in response:
-            entry = {}
-            for key in aim:
-                if key in row:
-                    entry[key] = row[key]
-            result.append(entry)
+def select_column_innerjoin(table,aim, where_condition):
+    ...
 
-    keys = result[0].keys() if result else []
-    max_lengths = [len(str(key)) for key in keys]
-    rows = []
-    for row in result:
-        values = list(row.values())
-        rows.append(values)
-        max_lengths = [max(max_lengths[i], len(str(values[i])) if values[i] else 0) for i in range(len(values))]
-    draw_table(rows, keys, max_lengths)
 
 
 def select_column(table_name, aim, where_condition):
@@ -138,7 +120,9 @@ def select_column(table_name, aim, where_condition):
 
     with open(table_file) as f:
         response = json.load(f)
+        print("--------------------------------")
         print(response)
+        print("--------------------------------")
         if len(response) == 0:
             print("Table is empty")
             return []
@@ -196,21 +180,22 @@ def main():
         user_input = input("Enter Command: ")
         if 'inner join' in user_input:
             #select * from student inner join grade on name where score>88
-            select_content,table1,table2,key,where_content= extract_tables_from_inner_join(user_input)
-            print(select_content,table1,table2,key,where_content)
-            table = inner_join(table1,table2,key) #这里的table就是select_column函数中的response
-            aim = []
-            where_condition = []
-            aim.append(select_content)
-            where_condition.append([where_content])
-            select_column_innerjoin(table,aim,where_condition)
-            print(aim,where_condition)
+            select_content, table1, table2, key, where_content = extract_tables_from_inner_join(user_input)
+            print(select_content, table1, table2, key, where_content)
+            table = inner_join(table1, table2, key)
+            aim,where_condition = get_user_input_join(user_input)
+            print(table)
+            print(aim)
+            print(where_condition) #这里可以正常的获取table aim where_condition，但问题是之前的select_column函数似乎不适用已经搞到response的情况，我要疯了
         else:
-            aim,table,where_condition= get_user_input(user_input)
+            aim, table, where_condition = get_user_input(user_input)
             if aim == ['*']:
-                select_all(table,where_condition)
+                print(table)
+                print(aim)
+                print(where_condition)
+                select_all(table, where_condition)
             else:
-                select_column(table,aim,where_condition)
+                select_column(table, aim, where_condition)
 
 
 if __name__ == "__main__":
