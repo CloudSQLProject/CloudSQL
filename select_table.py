@@ -6,7 +6,11 @@ from shared_data import table_keys,table_columns
 conditions = []
 
 def parse_where_conditions(where_condition):
-    conditions = re.split(r'\b(?: and | or )\b', where_condition)
+    conditions = []
+    sub_conditions = re.split(r'\b(?: or )\b', where_condition)
+    for sub_condition in sub_conditions:
+        and_conditions = re.split(r'\b(?: and )\b', sub_condition)
+        conditions.append(and_conditions)
     return conditions
 
 def get_user_input(user_input):
@@ -64,11 +68,16 @@ def select_column(table_name, aim, where_condition):
         result = []
         if where_condition:
             for row in response:
-                condition_met = True
-                for condition in where_condition:
-                    condition_key, condition_value = condition.split('=')
-                    if row.get(condition_key) != condition_value:
-                        condition_met = False
+                condition_met = False
+                for sub_conditions in where_condition:
+                    sub_condition_met = True
+                    for condition in sub_conditions:
+                        condition_key, condition_value = condition.split('=')
+                        if row.get(condition_key) != condition_value:
+                            sub_condition_met = False
+                            break
+                    if sub_condition_met:
+                        condition_met = True
                         break
                 if condition_met:
                     entry = {}
