@@ -137,9 +137,7 @@ def create_table_main():
             print(struct_table_list)
             create_table(table_name, struct_table_list)
             print("over")
-       # # elif command == 'insert' and len(parts) > 3 and parts[3] == 'values':
-       #      values = [value.strip('(),') for value in parts[4:]]
-       #      add_record(table_name, values)
+
 
             command = parts[0]
             table_name = parts[2]
