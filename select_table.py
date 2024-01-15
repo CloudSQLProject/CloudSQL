@@ -23,8 +23,11 @@ def apply_condition(row, condition):
             return row.get(condition_key) == condition_value
         elif condition_op == '<':
             return row.get(condition_key) < condition_value
-        elif condition_op == '>':
-            return row.get(condition_key) > condition_value
+        elif condition_op == '>=':
+            return row.get(condition_key) >= condition_value
+        elif condition_op == '<=':
+            return row.get(condition_key) <= condition_value
+
     return False
 
 
