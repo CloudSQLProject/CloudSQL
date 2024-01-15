@@ -90,7 +90,6 @@ def select_all(table_name,where_condition,order_by_column, order_by_order):
 
 
 def inner_join(table1, table2, join_key, select_fields, where_condition):
-    #inner_join('student', 'grade', 'name', ['name', 'age', 'location','subject','score'], ['score=99'])
     with open(f'{table1}.json') as f1, open(f'{table2}.json') as f2:
         data1 = json.load(f1)
         data2 = json.load(f2)
@@ -100,7 +99,10 @@ def inner_join(table1, table2, join_key, select_fields, where_condition):
             if row1[join_key] == row2[join_key]:
                 combined_row = {**row1, **row2}
                 if not where_condition or all(apply_condition(combined_row, condition) for condition in where_condition):
-                    result_row = {field: combined_row[field] for field in select_fields}
+                    if select_fields == ['*']:
+                        result_row = combined_row
+                    else:
+                        result_row = {field: combined_row[field] for field in select_fields}
                     result.append(result_row)
     keys = result[0].keys() if result else []
     max_lengths = [len(str(key)) for key in keys]
@@ -170,13 +172,14 @@ def select_column(table_name, aim, where_condition,order_by_column, order_by_ord
 
 
 def extract_tables_from_inner_join(user_input):
-    else_match = re.search(r'select (.*?) from .* where (.*)', user_input, re.I)
-    match = re.search(r'select .* from (\w+) inner join (\w+) on (\w+)', user_input, re.I)
-    if else_match and match:
-        select_content, where_content = else_match.groups()
-        table1, table2, key = match.groups()
+    match_with_where = re.search(r'select (.*?) from (\w+) inner join (\w+) on (\w+) where (.*)', user_input, re.I)
+    match_without_where = re.search(r'select (.*?) from (\w+) inner join (\w+) on (\w+)', user_input, re.I)
+    if match_with_where:
+        select_content, table1, table2, key, where_content = match_with_where.groups()
         return select_content, table1, table2, key, where_content
-
+    elif match_without_where:
+        select_content, table1, table2, key = match_without_where.groups()
+        return select_content, table1, table2, key, None
     else:
         return None, None, None, None, None
 
@@ -189,20 +192,23 @@ def main():
     while True:
         conditions = []
         user_input = input("Enter Command: ")
+        aim = None
         if 'inner join' in user_input:
-            if 'where' in user_input:
-                select_content, table1, table2, key, where_content = extract_tables_from_inner_join(user_input)
-                #print(select_content, table1, table2, key, where_content)
-                aim,where_condition = get_user_input_join(user_input)
-                if key not in table_columns[table1] or key not in table_columns[table2]:
-                    print("Table cannot be joined via this key")
-                    break
-                if aim == ['*']:
-                    inner_join(table1, table2, key, table_columns[table1] + table_columns[table2], where_condition)
+            select_content, table1, table2, key, where_content = extract_tables_from_inner_join(user_input)
+            if select_content and table1 and table2 and key:
+                if where_content:
+                    aim, where_condition = get_user_input_join(user_input)
+                    if key not in table_columns[table1] or key not in table_columns[table2]:
+                        print("Table cannot be joined via this key")
+                        break
+                    if aim is None:
+                        aim = table_columns[table1] + table_columns[table2]  # 设置默认的 aim 值
+                    inner_join(table1, table2, key, aim, where_condition)  # 调用 inner_join 时确保 aim 不为 None
                 else:
-                    inner_join(table1, table2, key, aim, where_condition)
-            else:
-                ...
+                    # 处理不带 where 条件的逻辑
+                    if aim is None:
+                        aim = table_columns[table1] + table_columns[table2]  # 设置默认的 aim 值
+                    inner_join(table1, table2, key, aim, None)  # 调用 inner_join 时确保 aim 不为 None
         else:
             aim, table, where_condition, order_by_column, order_by_order = get_user_input(user_input)
             if aim == ['*']:
@@ -210,7 +216,8 @@ def main():
             else:
                 select_column(table, aim, where_condition, order_by_column, order_by_order)
 
-#select * from student inner join grade on id where grade < 99 order by age desc
+
+#select * from student inner join grade on id where score>89
 #select * from student order by age asc
 if __name__ == "__main__":
     main()
