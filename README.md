@@ -18,6 +18,9 @@ drop table X
 
 # 删除列
 delete table 表名 columns 列名
+
+# 重命名表
+rename table old_name new_name
 ________________________________________________________________
 可以定义主键了
 
