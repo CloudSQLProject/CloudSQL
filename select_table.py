@@ -38,11 +38,13 @@ def get_user_input(user_input):
     parts = user_input.split(' ')
     if len(parts) < 4 or parts[0].lower() != 'select' or parts[2].lower() != 'from':
         print("Invalid command")
-        return None,None,None
+        return None,None,None,None,None
     else:
         aim = parts[1].split(',')
         table = parts[3]
         where_condition = None
+        order_by_column = None
+        order_by_order = None
         if len(parts)>4 and parts[4].lower() == 'where':
             where_condition = ' '.join(parts[5:])
             conditions = parse_where_conditions(where_condition)
