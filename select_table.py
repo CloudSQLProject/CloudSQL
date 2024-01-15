@@ -80,6 +80,45 @@ def select_all(table_name,where_condition):
     return select_column(table_name,table_columns[table_name],where_condition)
 
 
+def select_column_innerjoin(response,aim,where_condition):
+    print(response)
+
+    if len(response) == 0:
+        print("Table is empty")
+        return []
+
+    result = []
+    if where_condition:
+        for row in response:
+            condition_met = False
+            for sub_conditions in where_condition:
+                sub_condition_met = any(apply_condition(row, condition) for condition in sub_conditions)
+                if sub_condition_met:
+                    condition_met = True
+                    break
+            if condition_met:
+                entry = {}
+                for key in aim:
+                    if key in row:
+                        entry[key] = row[key]
+                result.append(entry)
+    else:
+        for row in response:
+            entry = {}
+            for key in aim:
+                if key in row:
+                    entry[key] = row[key]
+            result.append(entry)
+
+    keys = result[0].keys() if result else []
+    max_lengths = [len(str(key)) for key in keys]
+    rows = []
+    for row in result:
+        values = list(row.values())
+        rows.append(values)
+        max_lengths = [max(max_lengths[i], len(str(values[i])) if values[i] else 0) for i in range(len(values))]
+    draw_table(rows, keys, max_lengths)
+
 
 def select_column(table_name, aim, where_condition):
     if table_name in table_keys:
