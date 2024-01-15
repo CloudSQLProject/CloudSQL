@@ -5,8 +5,8 @@
 ________________________________________________________________
 # （暂时的）关于SQL输入
 使用如下语句进行create
+create table table_name(id int key not_null, name varchar(20) not_key not_null); 对应field字段每一个属性
 
-create table X columns a,b,c
 
 使用如下语句进行insert
 
