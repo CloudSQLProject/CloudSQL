@@ -1,0 +1,47 @@
+[
+    {
+        "id": "1",
+        "name": "zs",
+        "subject": "C++",
+        "score": "99"
+    },
+    {
+        "id": "2",
+        "name": "zs",
+        "subject": "Python",
+        "score": "98"
+    },
+    {
+        "id": "3",
+        "name": "khp",
+        "subject": "Java",
+        "score": "99"
+    },
+    {
+        "id": "4",
+        "name": "khp",
+        "subject": "SQL",
+        "score": "97"
+    },
+    {
+        "id": "5",
+        "name": "zl",
+        "subject": "Genshin",
+        "score": "89"
+    },{
+        "id": "6",
+        "name": "zl",
+        "subject": "Impact",
+        "score": "64"
+    },{
+        "id": "7",
+        "name": "Vertin",
+        "subject": "thuggisms",
+        "score": "100"
+    },{
+        "id": "8",
+        "name": "Vertin",
+        "subject": "XJP",
+        "score": "100"
+    }
+]
