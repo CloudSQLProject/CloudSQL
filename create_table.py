@@ -64,7 +64,21 @@ def drop_table(table_name):
             print('Table deleted successfully')
         except OSError as e:
             print(f"删除文件{table_name}时出错: {e.strerror}")
-            
+
+
+def rename_table(table_name_old, table_name_new):
+    table_file_old = f'./{table_name_old}.json'
+    table_file_new = f'./{table_name_new}.json'
+    if os.path.exists(table_file_old):
+        if not os.path.exists(table_file_new):
+            os.rename(table_file_old, table_file_new)
+            print(f'Table {table_name_new} renamed successfully')
+        else:
+            print(f"The new name {table_name_new} exists")
+    else:
+        print(f"Table {table_name_old} not exists")
+
+
 def delete_column(table_name, column_name):
     # 构建表格文件路径
     table_file = f'./{table_name}.json'
