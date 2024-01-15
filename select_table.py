@@ -14,17 +14,18 @@ def parse_where_conditions(where_condition):
     return conditions
 
 def apply_condition(row, condition):
-    condition_key, condition_value = re.split(r'(?<![><!=])\b(?:=|<|>)\b', condition)
-    condition_key = condition_key.strip()
-    condition_value = condition_value.strip()
-    if '=' in condition:
-        return row.get(condition_key) == condition_value
-    elif '<' in condition:
-        return row.get(condition_key) < condition_value
-    elif '>' in condition:
-        return row.get(condition_key) > condition_value
-    else:
-        return False
+    match = re.match(r'(\w+)\s*([<>=]+)\s*(\w+)', condition)
+    if match:
+        condition_key, condition_op, condition_value = match.groups()
+        condition_key = condition_key.strip()
+        condition_value = condition_value.strip()
+        if condition_op == '=':
+            return row.get(condition_key) == condition_value
+        elif condition_op == '<':
+            return row.get(condition_key) < condition_value
+        elif condition_op == '>':
+            return row.get(condition_key) > condition_value
+    return False
 
 
 def get_user_input(user_input):
@@ -82,11 +83,11 @@ def select_column(table_name, aim, where_condition):
         result = []
         if where_condition:
             for row in response:
-                condition_met = True
+                condition_met = False
                 for sub_conditions in where_condition:
-                    sub_condition_met = all(apply_condition(row, condition) for condition in sub_conditions)
-                    if not sub_condition_met:
-                        condition_met = False
+                    sub_condition_met = any(apply_condition(row, condition) for condition in sub_conditions)
+                    if sub_condition_met:
+                        condition_met = True
                         break
                 if condition_met:
                     entry = {}
