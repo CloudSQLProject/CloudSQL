@@ -1,35 +1,46 @@
 import json
 import os
+import re
+import field
+import table_format
 
 table_keys = {}
 table_columns = {}
 
 
-def create_table(table_name, *columns):
-    table_file = f'./{table_name}.json'
-    if not os.path.exists(table_file):
-        with open(table_file, 'w') as file:
-            initial_data = []
-            json.dump(initial_data, file)
-        columns = [column.strip(',') for col_group in columns for column in col_group.split(',')]
-        print(f'Table {table_name} created successfully with columns: {columns}')
-        global table_columns
-        global table_keys
-        table_columns[table_name] = columns
-        primary_key = input("Enter the primary key for the table: ")
-        if primary_key not in columns:
-            print("Primary key does not exist in the table columns")
-            os.remove(table_file)
-            return
-        table_keys[table_name] = primary_key
-        # print(table_columns)
-        # print(table_keys)
-    else:
-        print(f'Table {table_name} already exists')
+def create_table(table_name, columns:field.Field):
+    #columns[0].name
+    print(columns[0].name)#参数可以传递 类型是field
+    print(vars(columns[0]))
+    test_table= table_format.Table(table_name,columns)
+    test_table.save()
 
-    with open('shared_data.py', 'a') as f:
-        f.write(f"table_columns = {table_columns}\n")
-        f.write(f"table_keys = {table_keys}\n")
+    # table_file = f'./{table_name}.json'
+    # if not os.path.exists(table_file):
+    #     with open(table_file, 'w') as file:
+    #         initial_data = []
+    #         json.dump(initial_data, file)
+    #     columns = [column.strip(',') for col_group in columns for column in col_group.split(',')]
+    #     print(f'Table {table_name} created successfully with columns: {columns}')
+    #     global table_columns
+    #     global table_keys
+    #     table_columns[table_name] = columns
+    #     primary_key = input("Enter the primary key for the table: ")
+    #     if primary_key not in columns:
+    #         print("Primary key does not exist in the table columns")
+    #         os.remove(table_file)
+    #         return
+    #     table_keys[table_name] = primary_key
+    #     #print(table_columns)
+    #     #print(table_keys)
+    # else:
+    #     print(f'Table {table_name} already exists')
+    #
+    # with open('shared_data.py', 'w') as f:
+    #     f.write(f"table_columns = {table_columns}\n")
+    #     f.write(f"table_keys = {table_keys}\n")
+
+
 
 
 def add_record(table_name, values):
@@ -54,6 +65,29 @@ def add_record(table_name, values):
             print('Record added successfully')
     else:
         print(f'Table {table_name} does not exist')
+
+
+def drop_table(table_name):
+    table_file = f'./{table_name}.json'
+    if os.path.exists(table_file):
+        try:
+            os.remove(table_file)  # 删除table对应json文件
+            print('Table deleted successfully')
+        except OSError as e:
+            print(f"删除文件{table_name}时出错: {e.strerror}")
+
+
+def rename_table(table_name_old, table_name_new):
+    table_file_old = f'./{table_name_old}.json'
+    table_file_new = f'./{table_name_new}.json'
+    if os.path.exists(table_file_old):
+        if not os.path.exists(table_file_new):
+            os.rename(table_file_old, table_file_new)
+            print(f'Table {table_name_new} renamed successfully')
+        else:
+            print(f"The new name {table_name_new} exists")
+    else:
+        print(f"Table {table_name_old} not exists")
 
 
 def delete_column(table_name, column_name):
@@ -85,37 +119,50 @@ def delete_column(table_name, column_name):
     else:
         print(f'Table {table_name} does not exist')
 
-
-def rename_table(table_name_old, table_name_new):
-    table_file_old = f'./{table_name_old}.json'
-    table_file_new = f'./{table_name_new}.json'
-    if os.path.exists(table_file_old):
-        if not os.path.exists(table_file_new):
-            os.rename(table_file_old, table_file_new)
-            print(f'Table {table_name_new} renamed successfully')
-        else:
-            print(f"The new name {table_name_new} exists")
-    else:
-        print(f"Table {table_name_old} not exists")
-
-
-def drop_table(table_name):
-    table_file = f'./{table_name}.json'
-    if os.path.exists(table_file):
-        try:
-            os.remove(table_file)  # 删除table对应json文件
-            print('Table deleted successfully')
-        except OSError as e:
-            print(f"删除文件{table_name}时出错: {e.strerror}")
-
-
 def create_table_main():
+    #理想中的sql语句
+    #create table table_name(id int key not_null, name varchar(20) not_key not_null); 对应field字段每一个属性
     while True:
         user_input = input("Enter command: ")
+        # 定义要匹配的字符串
+        sql_statement = user_input
+        # 使用正则表达式匹配最外层括号内的内容
         parts = user_input.split()
         # if len(parts) < 4:
         #     print('Invalid command')
         #     continue
+
+        command = parts[0]#在以上的sql中只有part[0]是有效的识别命令符
+        print(command)
+        # 使用正则表达式匹配整个create table语句
+        if command == 'create' :
+            match = re.search(r'create table \w+\((.*)\)', sql_statement)  # 使用正则表达式匹配最外层括号内的内容
+            if match:
+                content_inside_outer_parentheses = match.group(1)  # 获取最外层括号内的内容
+                fields = [x.strip() for x in content_inside_outer_parentheses.split(',')]  # 以逗号为分隔符分割内容成列表
+                print("Columns:", fields)
+            else:
+                print("sql语句格式错误")
+            #columns = [column.strip(',') for column in parts[4:]]
+            match = re.search(r'create table (\w+)\(', sql_statement)  # 使用正则表达式匹配整个create table语句，并提取表名部分
+            if match:
+                table_name = match.group(1)  # 获取表名
+                print("Table Name:", table_name)
+            #已知表名和各属性之后,创建sql语句对应的文件
+            struct_table_list=[]
+            for column in fields:
+                struct=column.split()
+                print(struct)
+                print(column)
+                struct_table= field.Field(struct[0], struct[1], struct[2], struct[3])
+                struct_table_list.append(struct_table)
+
+            print(struct_table_list)
+            create_table(table_name, struct_table_list)
+       # # elif command == 'insert' and len(parts) > 3 and parts[3] == 'values':
+       #      values = [value.strip('(),') for value in parts[4:]]
+       #      add_record(table_name, values)
+
         command = parts[0]
         table_name = parts[2]
         if command == 'create' and len(parts) > 3 and parts[3] == 'columns':
@@ -126,6 +173,9 @@ def create_table_main():
             add_record(table_name, values)
         elif command == 'drop' and len(parts) == 3 and parts[1] == 'table':
             drop_table(table_name)
+        elif command == 'delete' and len(parts) > 3 and parts[3] == 'columns':
+            columns = parts[4:]
+            delete_column(table_name, *columns)  # 调用删除记录的函数
         elif command == 'rename' and len(parts) == 4 and parts[1] == 'table':
             rename_table(parts[2], parts[3])
         else:
