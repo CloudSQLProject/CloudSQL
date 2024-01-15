@@ -4,6 +4,7 @@ import os
 table_keys = {}
 table_columns = {}
 
+
 def create_table(table_name, *columns):
     table_file = f'./{table_name}.json'
     if not os.path.exists(table_file):
@@ -21,14 +22,15 @@ def create_table(table_name, *columns):
             os.remove(table_file)
             return
         table_keys[table_name] = primary_key
-        #print(table_columns)
-        #print(table_keys)
+        # print(table_columns)
+        # print(table_keys)
     else:
         print(f'Table {table_name} already exists')
 
     with open('shared_data.py', 'w') as f:
         f.write(f"table_columns = {table_columns}\n")
         f.write(f"table_keys = {table_keys}\n")
+
 
 def add_record(table_name, values):
     table_file = f'./{table_name}.json'
@@ -53,13 +55,24 @@ def add_record(table_name, values):
     else:
         print(f'Table {table_name} does not exist')
 
+
+def drop_table(table_name):
+    table_file = f'./{table_name}.json'
+    if os.path.exists(table_file):
+        try:
+            os.remove(table_file)  # 删除table对应json文件
+            print('Table deleted successfully')
+        except OSError as e:
+            print(f"删除文件{table_name}时出错: {e.strerror}")
+
+
 def create_table_main():
     while True:
         user_input = input("Enter command: ")
         parts = user_input.split()
-        if len(parts) < 4:
-            print('Invalid command')
-            continue
+        # if len(parts) < 4:
+        #     print('Invalid command')
+        #     continue
         command = parts[0]
         table_name = parts[2]
         if command == 'create' and len(parts) > 3 and parts[3] == 'columns':
@@ -68,8 +81,11 @@ def create_table_main():
         elif command == 'insert' and len(parts) > 3 and parts[3] == 'values':
             values = [value.strip('(),') for value in parts[4:]]
             add_record(table_name, values)
+        elif command == 'drop' and len(parts) == 3 and parts[1] == 'table':
+            drop_table(table_name)
         else:
             print('Invalid command')
+
 
 if __name__ == '__main__':
     create_table_main()
