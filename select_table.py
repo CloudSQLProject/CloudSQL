@@ -15,20 +15,21 @@ def parse_where_conditions(where_condition):
 
 def apply_condition(row, condition):
     match = re.match(r'(\w+)\s*([<>=]+)\s*(\w+)', condition)
-    condition_key, condition_op, condition_value = match.groups()
-    condition_key = condition_key.strip()
-    condition_value = condition_value.strip()
+    if match:
+        condition_key, condition_op, condition_value = match.groups()
+        condition_key = condition_key.strip()
+        condition_value = condition_value.strip()
+        if condition_op == '=':
+            return row.get(condition_key) == condition_value
+        elif condition_op == '<':
+            return row.get(condition_key) < condition_value
+        elif condition_op == '>':
+            return row.get(condition_key) > condition_value
+        elif condition_op == '>=':
+            return row.get(condition_key) >= condition_value
+        elif condition_op == '<=':
+            return row.get(condition_key) <= condition_value
 
-    if condition_op == '=':
-        return row.get(condition_key) == condition_value
-    elif condition_op == '<':
-        return row.get(condition_key) < condition_value
-    elif condition_op == '>':
-        return row.get(condition_key) > condition_value
-    elif condition_op == '>=':
-        return row.get(condition_key) >= condition_value
-    elif condition_op == '<=':
-        return row.get(condition_key) <= condition_value
     return False
 
 
@@ -46,12 +47,22 @@ def get_user_input(user_input):
             where_condition = ' '.join(parts[5:])
             conditions = parse_where_conditions(where_condition)
             print(conditions)
-        if 'order' in parts and 'by' in parts:
-            order_by_index = parts.index('order')
-            order_by_column = parts[order_by_index + 2]
-            order_by_order = parts[order_by_index + 3] if order_by_index + 3 < len(parts) else 'asc'
+        return aim,table,conditions
 
-        return aim, table, conditions, order_by_column, order_by_order
+
+def inner_join(table1, table2, join_key):
+    with open(f'{table1}.json') as f1, open(f'{table2}.json') as f2:
+        data1 = json.load(f1)
+        data2 = json.load(f2)
+
+    result = []
+    for row1 in data1:
+        for row2 in data2:
+            if row1[join_key] == row2[join_key]:
+                combined_row = {**row1, **row2}
+                result.append(combined_row)
+    return result
+
 
 def draw_table(data, keys, max_lengths):
     header = "|".join([f"{key:<{max_lengths[i]}}" for i, key in enumerate(keys)])
@@ -65,11 +76,12 @@ def draw_table(data, keys, max_lengths):
         #print(separator)
 
 
-def select_all(table_name,where_condition,order_by_column, order_by_order):
-    return select_column(table_name,table_columns[table_name],where_condition, order_by_column, order_by_order)
+def select_all(table_name,where_condition):
+    return select_column(table_name,table_columns[table_name],where_condition)
 
 
-def select_column(table_name, aim, where_condition, order_by_column, order_by_order):
+
+def select_column(table_name, aim, where_condition):
     if table_name in table_keys:
         primary_key = table_keys[table_name]
         if primary_key not in aim:
@@ -85,10 +97,10 @@ def select_column(table_name, aim, where_condition, order_by_column, order_by_or
 
     with open(table_file) as f:
         response = json.load(f)
+        print(response)
         if len(response) == 0:
             print("Table is empty")
             return []
-
         result = []
         if where_condition:
             for row in response:
@@ -111,10 +123,6 @@ def select_column(table_name, aim, where_condition, order_by_column, order_by_or
                     if key in row:
                         entry[key] = row[key]
                 result.append(entry)
-        if order_by_column:
-            result.sort(key=lambda x: x.get(order_by_column, 0))
-            if order_by_order.lower() == 'desc':
-                result.reverse()
 
         keys = result[0].keys() if result else []
         max_lengths = [len(str(key)) for key in keys]
@@ -125,18 +133,43 @@ def select_column(table_name, aim, where_condition, order_by_column, order_by_or
             max_lengths = [max(max_lengths[i], len(str(values[i])) if values[i] else 0) for i in range(len(values))]
         draw_table(rows, keys, max_lengths)
 
+
+def extract_tables_from_inner_join(user_input):
+    else_match = re.search(r'select (.*?) from .* where (.*)', user_input, re.I)
+    match = re.search(r'select .* from (\w+) inner join (\w+) on (\w+)', user_input, re.I)
+    if else_match and match:
+        select_content, where_content = else_match.groups()
+        table1, table2, key = match.groups()
+        return select_content, table1, table2, key, where_content
+    else:
+        return None, None, None, None, None
+
+
+
+
 def main():
     global conditions
     conditions = []
     while True:
         conditions = []
         user_input = input("Enter Command: ")
-        aim, table, where_condition, order_by_column, order_by_order= get_user_input(user_input)
-        #print(aim,table,where_condition)
-        if aim == ['*']:
-            select_all(table, where_condition, order_by_column, order_by_order)
+        if 'inner join' in user_input:
+            #select * from student inner join grade on name where score>88
+            select_content,table1,table2,key,where_content= extract_tables_from_inner_join(user_input)
+            print(select_content,table1,table2,key,where_content)
+            table = inner_join(table1,table2,key) #这里的table就是select_column函数中的response
+            aim = []
+            where_condition = []
+            aim.append(select_content)
+            where_condition.append([where_content])
+            select_column_innerjoin(table,aim,where_condition)
+            print(aim,where_condition)
         else:
-            select_column(table, aim, where_condition, order_by_column, order_by_order)
+            aim,table,where_condition= get_user_input(user_input)
+            if aim == ['*']:
+                select_all(table,where_condition)
+            else:
+                select_column(table,aim,where_condition)
 
 
 if __name__ == "__main__":
