@@ -14,6 +14,8 @@ def parse_where_conditions(where_condition):
     return conditions
 
 def apply_condition(row, condition):
+    if isinstance(condition, list):
+        return any(apply_condition(row, sub_condition) for sub_condition in condition)
     match = re.match(r'(\w+)\s*([<>=]+)\s*(\w+)', condition)
     if match:
         condition_key, condition_op, condition_value = match.groups()
@@ -67,20 +69,6 @@ def get_user_input_join(user_input):
         return None, None
 
 
-def inner_join(table1, table2, join_key):
-    with open(f'{table1}.json') as f1, open(f'{table2}.json') as f2:
-        data1 = json.load(f1)
-        data2 = json.load(f2)
-
-    result = []
-    for row1 in data1:
-        for row2 in data2:
-            if row1[join_key] == row2[join_key]:
-                combined_row = {**row1, **row2}
-                result.append(combined_row)
-    return result
-
-
 def draw_table(data, keys, max_lengths):
     header = "|".join([f"{key:<{max_lengths[i]}}" for i, key in enumerate(keys)])
     separator = "+".join(["-" * (max_lengths[i] + 2) for i in range(len(keys))])
@@ -97,10 +85,27 @@ def select_all(table_name,where_condition):
     return select_column(table_name,table_columns[table_name],where_condition)
 
 
-
-
-def select_column_innerjoin(table,aim, where_condition):
-    ...
+def inner_join(table1, table2, join_key, select_fields, where_condition):
+    #inner_join('student', 'grade', 'name', ['name', 'age', 'location','subject','score'], ['score=99'])
+    with open(f'{table1}.json') as f1, open(f'{table2}.json') as f2:
+        data1 = json.load(f1)
+        data2 = json.load(f2)
+    result = []
+    for row1 in data1:
+        for row2 in data2:
+            if row1[join_key] == row2[join_key]:
+                combined_row = {**row1, **row2}
+                if not where_condition or all(apply_condition(combined_row, condition) for condition in where_condition):
+                    result_row = {field: combined_row[field] for field in select_fields}
+                    result.append(result_row)
+    keys = result[0].keys() if result else []
+    max_lengths = [len(str(key)) for key in keys]
+    rows = []
+    for row in result:
+        values = list(row.values())
+        rows.append(values)
+        max_lengths = [max(max_lengths[i], len(str(values[i])) if values[i] else 0) for i in range(len(values))]
+    draw_table(rows, keys, max_lengths)
 
 
 
@@ -120,9 +125,6 @@ def select_column(table_name, aim, where_condition):
 
     with open(table_file) as f:
         response = json.load(f)
-        print("--------------------------------")
-        print(response)
-        print("--------------------------------")
         if len(response) == 0:
             print("Table is empty")
             return []
@@ -166,6 +168,7 @@ def extract_tables_from_inner_join(user_input):
         select_content, where_content = else_match.groups()
         table1, table2, key = match.groups()
         return select_content, table1, table2, key, where_content
+
     else:
         return None, None, None, None, None
 
@@ -179,20 +182,22 @@ def main():
         conditions = []
         user_input = input("Enter Command: ")
         if 'inner join' in user_input:
-            #select * from student inner join grade on name where score>88
-            select_content, table1, table2, key, where_content = extract_tables_from_inner_join(user_input)
-            print(select_content, table1, table2, key, where_content)
-            table = inner_join(table1, table2, key)
-            aim,where_condition = get_user_input_join(user_input)
-            print(table)
-            print(aim)
-            print(where_condition) #这里可以正常的获取table aim where_condition，但问题是之前的select_column函数似乎不适用已经搞到response的情况，我要疯了
+            if 'where' in user_input:
+                select_content, table1, table2, key, where_content = extract_tables_from_inner_join(user_input)
+                #print(select_content, table1, table2, key, where_content)
+                aim,where_condition = get_user_input_join(user_input)
+                if key not in table_columns[table1] or key not in table_columns[table2]:
+                    print("Table cannot be joined via this key")
+                    break
+                if aim == ['*']:
+                    inner_join(table1, table2, key, table_columns[table1] + table_columns[table2], where_condition)
+                else:
+                    inner_join(table1, table2, key, aim, where_condition)
+            else:
+                ...
         else:
             aim, table, where_condition = get_user_input(user_input)
             if aim == ['*']:
-                print(table)
-                print(aim)
-                print(where_condition)
                 select_all(table, where_condition)
             else:
                 select_column(table, aim, where_condition)
