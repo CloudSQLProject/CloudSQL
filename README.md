@@ -13,6 +13,14 @@ create table X columns a,b,c
 # 注意空格
 insert table X values (1, 2, 3)
 
+# 删除表
+drop table X
+
+# 删除列
+delete table 表名 columns 列名
+
+# 重命名表
+rename table old_name new_name
 ________________________________________________________________
 可以定义主键了
 

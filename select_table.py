@@ -6,8 +6,31 @@ from shared_data import table_keys,table_columns
 conditions = []
 
 def parse_where_conditions(where_condition):
-    conditions = re.split(r'\b(?: and | or )\b', where_condition)
+    conditions = []
+    sub_conditions = re.split(r'\b(?: or )\b', where_condition)
+    for sub_condition in sub_conditions:
+        and_conditions = re.split(r'\b(?: and )\b', sub_condition)
+        conditions.append(and_conditions)
     return conditions
+
+def apply_condition(row, condition):
+    match = re.match(r'(\w+)\s*([<>=]+)\s*(\w+)', condition)
+    condition_key, condition_op, condition_value = match.groups()
+    condition_key = condition_key.strip()
+    condition_value = condition_value.strip()
+
+    if condition_op == '=':
+        return row.get(condition_key) == condition_value
+    elif condition_op == '<':
+        return row.get(condition_key) < condition_value
+    elif condition_op == '>':
+        return row.get(condition_key) > condition_value
+    elif condition_op == '>=':
+        return row.get(condition_key) >= condition_value
+    elif condition_op == '<=':
+        return row.get(condition_key) <= condition_value
+    return False
+
 
 def get_user_input(user_input):
     global conditions
@@ -22,8 +45,13 @@ def get_user_input(user_input):
         if len(parts)>4 and parts[4].lower() == 'where':
             where_condition = ' '.join(parts[5:])
             conditions = parse_where_conditions(where_condition)
-            #print(conditions)
-        return aim,table,conditions
+            print(conditions)
+        if 'order' in parts and 'by' in parts:
+            order_by_index = parts.index('order')
+            order_by_column = parts[order_by_index + 2]
+            order_by_order = parts[order_by_index + 3] if order_by_index + 3 < len(parts) else 'asc'
+
+        return aim, table, conditions, order_by_column, order_by_order
 
 def draw_table(data, keys, max_lengths):
     header = "|".join([f"{key:<{max_lengths[i]}}" for i, key in enumerate(keys)])
@@ -37,11 +65,11 @@ def draw_table(data, keys, max_lengths):
         #print(separator)
 
 
-def select_all(table_name,where_condition):
-    return select_column(table_name,table_columns[table_name],where_condition)
+def select_all(table_name,where_condition,order_by_column, order_by_order):
+    return select_column(table_name,table_columns[table_name],where_condition, order_by_column, order_by_order)
 
 
-def select_column(table_name, aim, where_condition):
+def select_column(table_name, aim, where_condition, order_by_column, order_by_order):
     if table_name in table_keys:
         primary_key = table_keys[table_name]
         if primary_key not in aim:
@@ -64,11 +92,11 @@ def select_column(table_name, aim, where_condition):
         result = []
         if where_condition:
             for row in response:
-                condition_met = True
-                for condition in where_condition:
-                    condition_key, condition_value = condition.split('=')
-                    if row.get(condition_key) != condition_value:
-                        condition_met = False
+                condition_met = False
+                for sub_conditions in where_condition:
+                    sub_condition_met = any(apply_condition(row, condition) for condition in sub_conditions)
+                    if sub_condition_met:
+                        condition_met = True
                         break
                 if condition_met:
                     entry = {}
@@ -83,6 +111,10 @@ def select_column(table_name, aim, where_condition):
                     if key in row:
                         entry[key] = row[key]
                 result.append(entry)
+        if order_by_column:
+            result.sort(key=lambda x: x.get(order_by_column, 0))
+            if order_by_order.lower() == 'desc':
+                result.reverse()
 
         keys = result[0].keys() if result else []
         max_lengths = [len(str(key)) for key in keys]
@@ -93,22 +125,18 @@ def select_column(table_name, aim, where_condition):
             max_lengths = [max(max_lengths[i], len(str(values[i])) if values[i] else 0) for i in range(len(values))]
         draw_table(rows, keys, max_lengths)
 
-
-
-
-
 def main():
     global conditions
     conditions = []
     while True:
         conditions = []
         user_input = input("Enter Command: ")
-        aim,table,where_condition= get_user_input(user_input)
+        aim, table, where_condition, order_by_column, order_by_order= get_user_input(user_input)
         #print(aim,table,where_condition)
         if aim == ['*']:
-            select_all(table,where_condition)
+            select_all(table, where_condition, order_by_column, order_by_order)
         else:
-            select_column(table,aim,where_condition)
+            select_column(table, aim, where_condition, order_by_column, order_by_order)
 
 
 if __name__ == "__main__":
