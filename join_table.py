@@ -28,4 +28,4 @@ def inner_join(table1, table2, join_key, select_fields, where_condition):
     draw_table(rows, keys, max_lengths)
 
 if __name__ == '__main__':
-    inner_join('student', 'grade', 'name', ['name', 'age', 'location','subject','score'], ['score=99'])
+    inner_join('student', 'grade', 'name', ['name', 'age', 'location','subject','score'], None)
