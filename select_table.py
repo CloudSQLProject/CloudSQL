@@ -202,13 +202,12 @@ def main():
                         print("Table cannot be joined via this key")
                         break
                     if aim is None:
-                        aim = table_columns[table1] + table_columns[table2]  # 设置默认的 aim 值
-                    inner_join(table1, table2, key, aim, where_condition)  # 调用 inner_join 时确保 aim 不为 None
+                        aim = table_columns[table1] + table_columns[table2]
+                    inner_join(table1, table2, key, aim, where_condition)
                 else:
-                    # 处理不带 where 条件的逻辑
                     if aim is None:
-                        aim = table_columns[table1] + table_columns[table2]  # 设置默认的 aim 值
-                    inner_join(table1, table2, key, aim, None)  # 调用 inner_join 时确保 aim 不为 None
+                        aim = table_columns[table1] + table_columns[table2]
+                    inner_join(table1, table2, key, aim, None)
         else:
             aim, table, where_condition, order_by_column, order_by_order = get_user_input(user_input)
             if aim == ['*']:
@@ -218,6 +217,11 @@ def main():
 
 
 #select * from student inner join grade on id where score>89
+#select * from student inner join grade on name
+#select * from student where age>22
 #select * from student order by age asc
+#select * from student
+#select name,age from student
+
 if __name__ == "__main__":
     main()
