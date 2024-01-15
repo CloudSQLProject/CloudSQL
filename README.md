@@ -21,6 +21,9 @@ delete table 表名 columns 列名
 
 # 重命名表
 rename table old_name new_name
+
+# INNER_JOIN
+select XXX from table1 inner join table 2 on key where XXX
 ________________________________________________________________
 可以定义主键了
 

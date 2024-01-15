@@ -51,7 +51,11 @@ def get_user_input(user_input):
             where_condition = ' '.join(parts[5:])
             conditions = parse_where_conditions(where_condition)
             print(conditions)
-        return aim,table,conditions
+        if 'order' in parts and 'by' in parts:
+            order_by_index = parts.index('order')
+            order_by_column = parts[order_by_index + 2]
+            order_by_order = parts[order_by_index + 3] if order_by_index + 3 < len(parts) else 'asc'
+        return aim,table,conditions, order_by_column, order_by_order
 
 def get_user_input_join(user_input):
     global conditions
@@ -81,8 +85,8 @@ def draw_table(data, keys, max_lengths):
         #print(separator)
 
 
-def select_all(table_name,where_condition):
-    return select_column(table_name,table_columns[table_name],where_condition)
+def select_all(table_name,where_condition,order_by_column, order_by_order):
+    return select_column(table_name,table_columns[table_name],where_condition,order_by_column, order_by_order)
 
 
 def inner_join(table1, table2, join_key, select_fields, where_condition):
@@ -105,11 +109,12 @@ def inner_join(table1, table2, join_key, select_fields, where_condition):
         values = list(row.values())
         rows.append(values)
         max_lengths = [max(max_lengths[i], len(str(values[i])) if values[i] else 0) for i in range(len(values))]
+
     draw_table(rows, keys, max_lengths)
 
 
 
-def select_column(table_name, aim, where_condition):
+def select_column(table_name, aim, where_condition,order_by_column, order_by_order):
     if table_name in table_keys:
         primary_key = table_keys[table_name]
         if primary_key not in aim:
@@ -150,7 +155,10 @@ def select_column(table_name, aim, where_condition):
                     if key in row:
                         entry[key] = row[key]
                 result.append(entry)
-
+        if order_by_column:
+            result.sort(key=lambda x: x.get(order_by_column, 0))
+            if order_by_order.lower() == 'desc':
+                result.reverse()
         keys = result[0].keys() if result else []
         max_lengths = [len(str(key)) for key in keys]
         rows = []
@@ -196,12 +204,13 @@ def main():
             else:
                 ...
         else:
-            aim, table, where_condition = get_user_input(user_input)
+            aim, table, where_condition, order_by_column, order_by_order = get_user_input(user_input)
             if aim == ['*']:
-                select_all(table, where_condition)
+                select_all(table, where_condition, order_by_column, order_by_order)
             else:
-                select_column(table, aim, where_condition)
+                select_column(table, aim, where_condition, order_by_column, order_by_order)
 
-
+#select * from student inner join grade on id where grade < 99 order by age desc
+#select * from student order by age asc
 if __name__ == "__main__":
     main()
