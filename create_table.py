@@ -27,7 +27,7 @@ def create_table(table_name, *columns):
     else:
         print(f'Table {table_name} already exists')
 
-    with open('shared_data.py', 'w') as f:
+    with open('shared_data.py', 'a') as f:
         f.write(f"table_columns = {table_columns}\n")
         f.write(f"table_keys = {table_keys}\n")
 

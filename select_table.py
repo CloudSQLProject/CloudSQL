@@ -13,6 +13,24 @@ def parse_where_conditions(where_condition):
         conditions.append(and_conditions)
     return conditions
 
+def apply_condition(row, condition):
+    match = re.match(r'(\w+)\s*([<>=]+)\s*(\w+)', condition)
+    if match:
+        condition_key, condition_op, condition_value = match.groups()
+        condition_key = condition_key.strip()
+        condition_value = condition_value.strip()
+        if condition_op == '=':
+            return row.get(condition_key) == condition_value
+        elif condition_op == '<':
+            return row.get(condition_key) < condition_value
+        elif condition_op == '>=':
+            return row.get(condition_key) >= condition_value
+        elif condition_op == '<=':
+            return row.get(condition_key) <= condition_value
+
+    return False
+
+
 def get_user_input(user_input):
     global conditions
     parts = user_input.split(' ')
@@ -26,7 +44,7 @@ def get_user_input(user_input):
         if len(parts)>4 and parts[4].lower() == 'where':
             where_condition = ' '.join(parts[5:])
             conditions = parse_where_conditions(where_condition)
-            #print(conditions)
+            print(conditions)
         return aim,table,conditions
 
 def draw_table(data, keys, max_lengths):
@@ -70,12 +88,7 @@ def select_column(table_name, aim, where_condition):
             for row in response:
                 condition_met = False
                 for sub_conditions in where_condition:
-                    sub_condition_met = True
-                    for condition in sub_conditions:
-                        condition_key, condition_value = condition.split('=')
-                        if row.get(condition_key) != condition_value:
-                            sub_condition_met = False
-                            break
+                    sub_condition_met = any(apply_condition(row, condition) for condition in sub_conditions)
                     if sub_condition_met:
                         condition_met = True
                         break
