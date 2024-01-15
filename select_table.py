@@ -13,6 +13,20 @@ def parse_where_conditions(where_condition):
         conditions.append(and_conditions)
     return conditions
 
+def apply_condition(row, condition):
+    condition_key, condition_value = re.split(r'(?<![><!=])\b(?:=|<|>)\b', condition)
+    condition_key = condition_key.strip()
+    condition_value = condition_value.strip()
+    if '=' in condition:
+        return row.get(condition_key) == condition_value
+    elif '<' in condition:
+        return row.get(condition_key) < condition_value
+    elif '>' in condition:
+        return row.get(condition_key) > condition_value
+    else:
+        return False
+
+
 def get_user_input(user_input):
     global conditions
     parts = user_input.split(' ')
@@ -26,7 +40,7 @@ def get_user_input(user_input):
         if len(parts)>4 and parts[4].lower() == 'where':
             where_condition = ' '.join(parts[5:])
             conditions = parse_where_conditions(where_condition)
-            #print(conditions)
+            print(conditions)
         return aim,table,conditions
 
 def draw_table(data, keys, max_lengths):
@@ -68,16 +82,11 @@ def select_column(table_name, aim, where_condition):
         result = []
         if where_condition:
             for row in response:
-                condition_met = False
+                condition_met = True
                 for sub_conditions in where_condition:
-                    sub_condition_met = True
-                    for condition in sub_conditions:
-                        condition_key, condition_value = condition.split('=')
-                        if row.get(condition_key) != condition_value:
-                            sub_condition_met = False
-                            break
-                    if sub_condition_met:
-                        condition_met = True
+                    sub_condition_met = all(apply_condition(row, condition) for condition in sub_conditions)
+                    if not sub_condition_met:
+                        condition_met = False
                         break
                 if condition_met:
                     entry = {}
