@@ -128,6 +128,8 @@ def create_table_main():
         elif command == 'delete' and len(parts) > 3 and parts[3] == 'columns':
             columns = parts[4:]
             delete_column(table_name, *columns)  # 调用删除记录的函数
+        elif command == 'rename' and len(parts) == 4 and parts[1] == 'table':
+            rename_table(parts[2], parts[3])
         else:
             print('Invalid command')
 
