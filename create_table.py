@@ -6,40 +6,17 @@ import table_format
 
 table_keys = {}
 table_columns = {}
-
-
 def create_table(table_name, columns:field.Field):
     #columns[0].name
     print(columns[0].name)#参数可以传递 类型是field
     print(vars(columns[0]))
-    test_table= table_format.Table(table_name,columns)
-    test_table.save()
-
-    # table_file = f'./{table_name}.json'
-    # if not os.path.exists(table_file):
-    #     with open(table_file, 'w') as file:
-    #         initial_data = []
-    #         json.dump(initial_data, file)
-    #     columns = [column.strip(',') for col_group in columns for column in col_group.split(',')]
-    #     print(f'Table {table_name} created successfully with columns: {columns}')
-    #     global table_columns
-    #     global table_keys
-    #     table_columns[table_name] = columns
-    #     primary_key = input("Enter the primary key for the table: ")
-    #     if primary_key not in columns:
-    #         print("Primary key does not exist in the table columns")
-    #         os.remove(table_file)
-    #         return
-    #     table_keys[table_name] = primary_key
-    #     #print(table_columns)
-    #     #print(table_keys)
-    # else:
-    #     print(f'Table {table_name} already exists')
-    #
-    # with open('shared_data.py', 'w') as f:
-    #     f.write(f"table_columns = {table_columns}\n")
-    #     f.write(f"table_keys = {table_keys}\n")
-
+    directory = "dir/user_default/db0"  # 目标目录
+    table_directory = os.path.join(directory, table_name)
+    if  os.path.exists(table_directory):
+        print(f'Table {table_name} already exists')
+    else:
+        test_table= table_format.Table(table_name,columns)
+        test_table.save()
 
 
 
@@ -164,11 +141,9 @@ def create_table_main():
        #      values = [value.strip('(),') for value in parts[4:]]
        #      add_record(table_name, values)
 
-        command = parts[0]
-        table_name = parts[2]
-        if command == 'create' and len(parts) > 3 and parts[3] == 'columns':
-            columns = [column.strip(',') for column in parts[4:]]
-            create_table(table_name, *columns)
+            command = parts[0]
+            table_name = parts[2]
+
         elif command == 'insert' and len(parts) > 3 and parts[3] == 'values':
             values = [value.strip('(),') for value in parts[4:]]
             add_record(table_name, values)
