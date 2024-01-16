@@ -52,15 +52,11 @@ def add_record(table_name, values):
     table_directory = os.path.join(directory, table_name)
     table_file = table_directory + f'/{table_name}.json'
     table_struct = table_directory + f'/{table_name}_struct.json'
-
     load_existing_data(table_file)
-
     if os.path.exists(table_file):
         with open(table_struct, 'r') as file:
             datas = json.load(file)
-
         elements = values.split(',')
-
         if len(elements) != len(datas):
             print(f'Error: Number of values does not match the number of columns for table {table_name}')
             return
@@ -69,24 +65,20 @@ def add_record(table_name, values):
             for i in range(len(datas)):
                 if datas[i]['primary_key'] == 'key':
                     primary_key_value = elements[i]
-                    if primary_key_value in primary_keys:  # 检查主键是否重复
+                    if primary_key_value in primary_keys:
                         print('Record with the same primary key already exists')
                         return
                     else:
                         primary_keys.add(primary_key_value)
-
             if primary_key_value is None:
                 print('No primary key provided')
                 return
-
-            record = {}  # 用字典来存储要写入的记录
+            record = {}
             for i in range(len(datas)):
                 record[datas[i]['name']] = elements[i]
-
             with open(table_file, 'r') as f:
-                existing_data = json.load(f)  # 读取已有的数据
-
-            existing_data.append(record)  # 将新记录添加到已有数据中
+                existing_data = json.load(f)
+            existing_data.append(record)
 
             with open(table_file, 'w') as f:
                 json.dump(existing_data, f, indent=4)  # 将数据写入 JSON 文件中，格式化缩进为4个空格

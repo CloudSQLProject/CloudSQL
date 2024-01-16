@@ -74,8 +74,8 @@ def get_user_input_inner_join(user_input):
             order_by_column = order_by_info[0]
             order_by_order = order_by_info[1] if len(order_by_info) > 1 else 'asc'
         else:
-            order_by_column = None  # 设置默认值
-            order_by_order = 'asc'  # 设置默认值
+            order_by_column = None
+            order_by_order = 'asc'
         return aim, conditions, order_by_column, order_by_order
     else:
         print("Invalid command")
@@ -199,9 +199,6 @@ def extract_tables_from_inner_join(user_input):
         return select_content, table1, table2, key, None
     else:
         return None, None, None, None, None
-
-
-
 
 def execute_sql_query(user_input, order_by_column=None, order_by_order=None):
     aim = None
