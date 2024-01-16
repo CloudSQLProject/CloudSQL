@@ -112,18 +112,16 @@ def drop_table(table_name):
     else:
         print(f'Table {table_name} does not exist')
 
-#rename table student student
+
 def rename_table(old_table_name, new_table_name):
     directory = "dir/user_default/db0"  # 目标目录
     old_table_directory = os.path.join(directory, old_table_name)
     new_table_directory = os.path.join(directory, new_table_name)
-
     # 检查原表是否存在
     if os.path.exists(old_table_directory):
         try:
             # 重命名目录
             os.rename(old_table_directory, new_table_directory)
-
             # 遍历新目录下的所有文件
             for root, dirs, files in os.walk(new_table_directory):
                 for file in files:
@@ -131,20 +129,16 @@ def rename_table(old_table_name, new_table_name):
                     if file.startswith(f"{old_table_name}"):
                         # 构造新文件名
                         new_file_name = file.replace(f"{old_table_name}", f"{new_table_name}")
-
                         # 构造文件的完整路径
                         old_file_path = os.path.join(root, file)
                         new_file_path = os.path.join(root, new_file_name)
-
                         # 进行重命名操作
                         os.rename(old_file_path, new_file_path)
-
             print(f"Table '{old_table_name}' renamed to '{new_table_name}' successfully")
         except OSError as e:
             print(f"重命名表时出错: {e.strerror}")
     else:
         print(f"Table '{old_table_name}' does not exist. Rename operation aborted.")
-
 
 def delete_column(table_name, column_name):
     # 构建表格文件路径

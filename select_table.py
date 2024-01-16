@@ -123,8 +123,8 @@ def inner_join(table1, table2, join_key, select_fields, where_condition, order_b
         values = list(row.values())
         rows.append(values)
         max_lengths = [max(max_lengths[i], len(str(values[i])) if values[i] else 0) for i in range(len(values))]
-    print(result)
     draw_table(rows, keys, max_lengths)
+    return result
 
 
 
@@ -180,8 +180,9 @@ def select_column(table_name, aim, where_condition,order_by_column, order_by_ord
             values = list(row.values())
             rows.append(values)
             max_lengths = [max(max_lengths[i], len(str(values[i])) if values[i] else 0) for i in range(len(values))]
-        print(result)
         draw_table(rows, keys, max_lengths)
+        return result
+
 
 
 def extract_tables_from_inner_join(user_input):
