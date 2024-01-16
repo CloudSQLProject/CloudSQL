@@ -32,12 +32,28 @@ def find_id_with_primary_key(datas, primary_key_value):
 
 primary_keys = set()
 
+def load_existing_data(table_file):
+    global primary_keys
+    if os.path.exists(table_file):
+        with open(table_file, 'r') as f:
+            existing_data = json.load(f)
+            for record in existing_data:
+                primary_key_value = record.get('id')  # 假设主键的字段名为 'id'
+                if primary_key_value:
+                    primary_keys.add(primary_key_value)
+    else:
+        print(f'File {table_file} does not exist')
+
+
+
 
 def add_record(table_name, values):
     directory = "dir/user_default/db0"  # 目标目录
     table_directory = os.path.join(directory, table_name)
     table_file = table_directory + f'/{table_name}.json'
     table_struct = table_directory + f'/{table_name}_struct.json'
+
+    load_existing_data(table_file)
 
     if os.path.exists(table_file):
         with open(table_struct, 'r') as file:
@@ -49,15 +65,19 @@ def add_record(table_name, values):
             print(f'Error: Number of values does not match the number of columns for table {table_name}')
             return
         else:
-            primary_key_values = {}  # 用字典来存储主键和对应的值
+            primary_key_value = None
             for i in range(len(datas)):
                 if datas[i]['primary_key'] == 'key':
                     primary_key_value = elements[i]
-                    if primary_key_value in primary_key_values.values():  # 检查主键是否重复
+                    if primary_key_value in primary_keys:  # 检查主键是否重复
                         print('Record with the same primary key already exists')
                         return
                     else:
-                        primary_key_values[datas[i]['name']] = primary_key_value
+                        primary_keys.add(primary_key_value)
+
+            if primary_key_value is None:
+                print('No primary key provided')
+                return
 
             record = {}  # 用字典来存储要写入的记录
             for i in range(len(datas)):
@@ -76,7 +96,8 @@ def add_record(table_name, values):
         print(f'Table {table_name} does not exist')
 
 
-#insert table table_name values(1,"fucking")
+
+#insert table table_name values(1,fucking)
 def drop_table(table_name):
     directory = "dir/user_default/db0"  # 目标目录
     table_directory = os.path.join(directory, table_name)

@@ -67,18 +67,20 @@ def get_user_input_inner_join(user_input):
         aim = select_match.group(1).split(',')
         where_condition = where_match.group(1)
         conditions = parse_where_conditions(where_condition)
-        #print(conditions)
         order_by_column = None
         order_by_order = None
         if order_by_match:
             order_by_info = order_by_match.group(1).split()
             order_by_column = order_by_info[0]
             order_by_order = order_by_info[1] if len(order_by_info) > 1 else 'asc'
-            #print(order_by_column, order_by_order)
+        else:
+            order_by_column = None  # 设置默认值
+            order_by_order = 'asc'  # 设置默认值
         return aim, conditions, order_by_column, order_by_order
     else:
         print("Invalid command")
         return None, None, None, None
+
 
 
 def draw_table(data, keys, max_lengths):
@@ -121,7 +123,7 @@ def inner_join(table1, table2, join_key, select_fields, where_condition, order_b
         values = list(row.values())
         rows.append(values)
         max_lengths = [max(max_lengths[i], len(str(values[i])) if values[i] else 0) for i in range(len(values))]
-
+    print(result)
     draw_table(rows, keys, max_lengths)
 
 
@@ -178,6 +180,7 @@ def select_column(table_name, aim, where_condition,order_by_column, order_by_ord
             values = list(row.values())
             rows.append(values)
             max_lengths = [max(max_lengths[i], len(str(values[i])) if values[i] else 0) for i in range(len(values))]
+        print(result)
         draw_table(rows, keys, max_lengths)
 
 
@@ -228,12 +231,11 @@ def main():
 
 #select * from student inner join grade on name where score>89
 #select * from student inner join grade on name
-#select * from student where age>22
+#select * from student where age>20
 #select * from student order by age asc
 #select * from student
 #select name,age from student
 #select name,age,score,id from student inner join grade on name where score>89 order by age asc
-#select student.id,student.location,grade.score,grade.subject from student,grade where student.name=grade.name
 
 if __name__ == "__main__":
     main()
