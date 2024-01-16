@@ -109,6 +109,5 @@ if __name__ == "__main__":
         elif command.startswith("exit"): #退出
             loginFlag = False
             break
-
         elif command.startswith("table"):
             create_table_main()

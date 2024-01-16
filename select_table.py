@@ -227,11 +227,5 @@ def execute_sql_query(user_input, order_by_column=None, order_by_order=None):
             return select_column(table, aim, where_condition, order_by_column, order_by_order)
 
 
-#select * from student inner join grade on name where score>89
-#select * from student inner join grade on name
-#select * from student where age>20
-#select * from student order by age asc
-#select * from student
-#select name,age from student
-#select name,age,score,id from student inner join grade on name where score>89 order by age asc
+
 

@@ -3,6 +3,13 @@ import json
 from tkinter import ttk
 from select_table import *
 
+#select * from student inner join grade on name where score>89
+#select * from student inner join grade on name
+#select * from student where age>20
+#select * from student order by age asc
+#select name,age from student
+#select name,age,score,id from student inner join grade on name where score>89 order by age asc
+
 # 执行按钮的点击事件处理函数
 def execute_button_clicked():
     sql_query = sql_entry.get()  # 获取输入框中的 SQL 语句
@@ -22,6 +29,7 @@ def display_results_in_table(results):
         result_tree['columns'] = headers
         for header in headers:
             result_tree.heading(header, text=header)
+            result_tree.column(header, anchor="center")
         for result in results:
             values = [result[header] for header in headers]
             result_tree.insert('', tk.END, values=values)
@@ -31,7 +39,7 @@ root = tk.Tk()
 root.title("SQL Query Executor")
 
 # 创建输入框
-sql_entry = tk.Entry(root, width=50)
+sql_entry = tk.Entry(root, width=100)
 sql_entry.pack(pady=10)
 
 # 创建执行按钮
