@@ -3,12 +3,13 @@ import json
 import os
 import re
 
+from CloudSQL.select_table import apply_condition
+from CloudSQL.shared_data import table_keys, table_columns
 
-from CloudSQL.select_table import  apply_condition
-from CloudSQL.shared_data import table_keys,table_columns
 
-
-def update_select(table_name, aim, where_condition):    # 同select_column, 将select结果更新并写回
+# 是select_column, 若update语句有where条件，则查询，修改查询结果，在写回文件
+# 如果select_column有return可以直接使用select_column
+def update_select(table_name, aim, where_condition):
     if table_name in table_keys:
         primary_key = table_keys[table_name]
         if primary_key not in aim:
@@ -24,9 +25,6 @@ def update_select(table_name, aim, where_condition):    # 同select_column, 将s
 
     with open(table_file) as f:
         response = json.load(f)
-        print("--------------------------------")
-        print(response)
-        print("--------------------------------")
         if len(response) == 0:
             print("Table is empty")
             return []
@@ -54,35 +52,36 @@ def update_select(table_name, aim, where_condition):    # 同select_column, 将s
                 result.append(entry)
     return result
 
-def update_all(table_name, natures):
-    pairs = natures.split(',')
+
+# 无where条件语句时
+def update_all(table_name, natures): # 例：(update table_name set key1=value1,key2=value2) <--natures=key1=value1,key2=value2
+    pairs = natures.split(',') # 逗号分隔
     with open(f'{table_name}.json', 'r+') as f:
         contents = json.load(f)
-    for nv in pairs:
-        key, value = nv.strip().split('=')
+    for pair in pairs:
+        key, value = pair.strip().split('=')  # 键值对
         for content in contents:
-            content[key.strip()] = value.strip()
+            content[key.strip()] = value.strip()  # 遍历所有结果并赋值
     with open(f'{table_name}.json', 'r+') as f:
         json.dump(contents, f, indent=4)
 
 
-def update_part(table_name, condition, natures):
+def update_part(table_name, condition, natures):#例：(update table_name set key1=value1,key2=value2 where condition) <--natures=key1=value1,key2=value2
     pairs = natures.split(',')
-    contents = update_select(table_name, table_columns[table_name],[[condition]])
+    contents = update_select(table_name, table_columns[table_name], [[condition]]) #select执行结果
     with open(f'{table_name}.json', 'r+') as f:
         responses = json.load(f)
     for pair in pairs:
         key, value = pair.strip().split('=')
         for content in contents:
-            content[key.strip()] = value.strip()
-    for i, response in enumerate(responses):
+            content[key.strip()] = value.strip() # 赋值
+    for i, response in enumerate(responses): # responses是文件内容 content是修改后的select结果
         for content in contents:
             if response['id'] == content['id']:
-                responses[i] = copy.deepcopy(content)
+                responses[i] = copy.deepcopy(content) # 遍历并按id位置写回
                 break
     with open(f'{table_name}.json', 'r+') as f:
         json.dump(responses, f, indent=4)
-
 
 def handle_update_sql(sql):
     """ 分析 update 语法"""
@@ -104,10 +103,6 @@ def handle_update_sql(sql):
         table_name = re.match(pattern_one, sql).group(1)
         natures = re.match(pattern_one, sql).group(2)
         condition = re.match(pattern_one, sql).group(3)
-    # 判断表是否存在，view 未做处理...
-    # if table_name not in dbms_settings.dictionary[dbms_settings.current_database]['tables']:
-    #     print("Table doesn't exist")
-    #     return
     if not os.path.exists(f'{table_name}.json'):
         print('Table does not exist')
     # 更新全部数据
@@ -118,6 +113,6 @@ def handle_update_sql(sql):
         update_part(table_name, condition, natures)
         return
 
+
 handle_update_sql("update student set name='zhaoshuai',age=88 where id<3")
 # handle_update_sql("update student set name='zhaoshuai',age=565")
-
