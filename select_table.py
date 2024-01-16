@@ -57,28 +57,27 @@ def get_user_input(user_input):
             order_by_order = parts[order_by_index + 3] if order_by_index + 3 < len(parts) else 'asc'
         return aim,table,conditions, order_by_column, order_by_order
 
-def get_user_input_join(user_input):
+def get_user_input_inner_join(user_input):
     global conditions
     select_match = re.search(r'select (.*?) from', user_input, re.I)
     where_match = re.search(r'where (.*)', user_input, re.I)
-    order_by_match = re.search(r'order by(.*)', user_input, re.I)
+    order_by_match = re.search(r'order by (.*)', user_input, re.I)
     if select_match and where_match:
         aim = select_match.group(1).split(',')
         where_condition = where_match.group(1)
         conditions = parse_where_conditions(where_condition)
         print(conditions)
+        order_by_column = None
+        order_by_order = None
         if order_by_match:
             order_by_info = order_by_match.group(1).split()
             order_by_column = order_by_info[0]
             order_by_order = order_by_info[1] if len(order_by_info) > 1 else 'asc'
             print(order_by_column, order_by_order)
-        else:
-            order_by_column = None
-            order_by_order = None
         return aim, conditions, order_by_column, order_by_order
     else:
         print("Invalid command")
-        return None, None
+        return None, None, None, None
 
 
 def draw_table(data, keys, max_lengths):
@@ -97,7 +96,7 @@ def select_all(table_name,where_condition,order_by_column, order_by_order):
     return select_column(table_name,table_columns[table_name],where_condition,order_by_column, order_by_order)
 
 
-def inner_join(table1, table2, join_key, select_fields, where_condition):
+def inner_join(table1, table2, join_key, select_fields, where_condition, order_by_column, order_by_order):
     with open(f'{table1}.json') as f1, open(f'{table2}.json') as f2:
         data1 = json.load(f1)
         data2 = json.load(f2)
@@ -112,6 +111,10 @@ def inner_join(table1, table2, join_key, select_fields, where_condition):
                     else:
                         result_row = {field: combined_row[field] for field in select_fields}
                     result.append(result_row)
+
+    if order_by_column:
+        result.sort(key=lambda x: x.get(order_by_column, 0), reverse=(order_by_order.lower() == 'desc'))
+
     keys = result[0].keys() if result else []
     max_lengths = [len(str(key)) for key in keys]
     rows = []
@@ -205,17 +208,17 @@ def main():
             select_content, table1, table2, key, where_content = extract_tables_from_inner_join(user_input)
             if select_content and table1 and table2 and key:
                 if where_content:
-                    aim, where_condition = get_user_input_join(user_input)
+                    aim, where_condition, order_by_column, order_by_order = get_user_input_inner_join(user_input)
                     if key not in table_columns[table1] or key not in table_columns[table2]:
                         print("Table cannot be joined via this key")
                         break
                     if aim is None:
                         aim = table_columns[table1] + table_columns[table2]
-                    inner_join(table1, table2, key, aim, where_condition)
+                    inner_join(table1, table2, key, aim, where_condition, order_by_column, order_by_order)
                 else:
                     if aim is None:
                         aim = table_columns[table1] + table_columns[table2]
-                    inner_join(table1, table2, key, aim, None)
+                    inner_join(table1, table2, key, aim, None, order_by_column, order_by_order)
         else:
             aim, table, where_condition, order_by_column, order_by_order = get_user_input(user_input)
             if aim == ['*']:
