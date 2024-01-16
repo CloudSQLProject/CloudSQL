@@ -27,8 +27,5 @@ def inner_join(table1, table2, join_key, select_fields, where_condition):
         max_lengths = [max(max_lengths[i], len(str(values[i])) if values[i] else 0) for i in range(len(values))]
     draw_table(rows, keys, max_lengths)
 
-
-
-
 if __name__ == '__main__':
     inner_join('student', 'grade', 'name', ['name', 'age', 'location','subject','score'], None)

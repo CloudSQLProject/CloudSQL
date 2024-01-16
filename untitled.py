@@ -1,3 +1,7 @@
+import tkinter as tk
+from tkinter import messagebox
+import json
+from select_table import *
 import json
 import os
 import re
@@ -23,17 +27,20 @@ def apply_condition(row, condition):
         condition_key, condition_op, condition_value = match.groups()
         condition_key = condition_key.strip()
         condition_value = condition_value.strip()
-        if condition_op == '=':
-            return row.get(condition_key) == condition_value
-        elif condition_op == '<':
-            return row.get(condition_key) < condition_value
-        elif condition_op == '>':
-            return row.get(condition_key) > condition_value
-        elif condition_op == '>=':
-            return row.get(condition_key) >= condition_value
-        elif condition_op == '<=':
-            return row.get(condition_key) <= condition_value
+        row_value = row.get(condition_key)
+        if row_value is not None:
+            if condition_op == '=':
+                return row_value == condition_value
+            elif condition_op == '<':
+                return row_value < condition_value
+            elif condition_op == '>':
+                return row_value > condition_value
+            elif condition_op == '>=':
+                return row_value >= condition_value
+            elif condition_op == '<=':
+                return row_value <= condition_value
     return False
+
 
 
 def get_user_input(user_input):
@@ -196,44 +203,112 @@ def extract_tables_from_inner_join(user_input):
 
 
 
-def main():
-    global conditions
-    conditions = []
-    while True:
-        conditions = []
-        user_input = input("Enter Command: ")
-        aim = None
-        if 'inner join' in user_input:
-            select_content, table1, table2, key, where_content = extract_tables_from_inner_join(user_input)
-            if select_content and table1 and table2 and key:
-                if where_content:
-                    aim, where_condition, order_by_column, order_by_order = get_user_input_inner_join(user_input)
-                    if key not in table_columns[table1] or key not in table_columns[table2]:
-                        print("Table cannot be joined via this key")
-                        break
-                    if aim is None:
-                        aim = table_columns[table1] + table_columns[table2]
-                    inner_join(table1, table2, key, aim, where_condition, order_by_column, order_by_order)
-                else:
-                    if aim is None:
-                        aim = table_columns[table1] + table_columns[table2]
-                    inner_join(table1, table2, key, aim, None, order_by_column, order_by_order)
-        else:
-            aim, table, where_condition, order_by_column, order_by_order = get_user_input(user_input)
-            if aim == ['*']:
-                select_all(table, where_condition, order_by_column, order_by_order)
+def compare_user_info(username, password):
+    with open('./users.json', 'r') as file:
+        data = json.load(file)
+        if username in data:
+            if data[username]['password'] == password:
+                messagebox.showinfo("登录成功", "欢迎，" + username + "!")
+                open_sql_page()
             else:
-                select_column(table, aim, where_condition, order_by_column, order_by_order)
+                messagebox.showerror("登录失败", "密码错误")
+        else:
+            messagebox.showerror("登录失败", "用户名不存在")
+
+def login():
+    username = username_entry.get()
+    password = password_entry.get()
+    compare_user_info(username, password)
+
+def open_sql_page():
+    root.withdraw()
+    sql_page = tk.Tk()
+    sql_page.title("SQL查询")
+
+    query_label = tk.Label(sql_page, text="输入SQL语句：")
+    query_label.pack()
+    query_entry = tk.Entry(sql_page)
+    query_entry.pack()
+
+    result_label = tk.Label(sql_page, text="查询结果：")
+    result_label.pack()
+    result_text = tk.Text(sql_page, height=10, width=50)
+    result_text.pack()
+
+    def run_query():
+        sql_query = query_entry.get()
+        if 'inner join' in sql_query.lower():
+            select_content, table1, table2, key, where_content = extract_tables_from_inner_join(sql_query)
+            if select_content and table1 and table2 and key:
+                select_fields, conditions, order_by_column, order_by_order = get_user_input_inner_join(sql_query)
+                result = inner_join(table1, table2, key, select_fields, conditions, order_by_column, order_by_order)
+                display_result(result)
+            else:
+                display_invalid_query_message()
+        else:
+            aim, table, conditions, order_by_column, order_by_order = get_user_input(sql_query)
+            if aim and table:
+                if conditions:
+                    result = select_column(table, aim, conditions, order_by_column, order_by_order)
+                    display_result(result)
+                else:
+                    result = select_all(table, None, order_by_column, order_by_order)
+                    display_result(result)
+            else:
+                display_invalid_query_message()
+
+    def display_result(result):
+        result_text.delete('1.0', tk.END)
+        if result:
+            for row in result:
+                result_text.insert(tk.END, "|".join(map(str, row)) + "\n")
+        else:
+            result_text.insert(tk.END, "No results found")
+
+    def display_invalid_query_message():
+        result_text.delete('1.0', tk.END)
+        result_text.insert(tk.END, "Invalid query")
+
+    query_button = tk.Button(sql_page, text="执行查询", command=run_query)
+    query_button.pack()
+
+    result_text = tk.Text(sql_page, height=10, width=50)
+    result_text.pack()
+
+    def close_sql_page():
+        sql_page.destroy()
+        root.deiconify()
+
+    sql_page.protocol("WM_DELETE_WINDOW", close_sql_page)
+    sql_page.mainloop()
+
+# 创建主窗口
+root = tk.Tk()
+root.title("登录系统")
+
+# 添加用户名和密码输入框
+username_label = tk.Label(root, text="用户名：")
+username_label.grid(row=0, column=0, padx=10, pady=10)
+username_entry = tk.Entry(root)
+username_entry.grid(row=0, column=1, padx=10, pady=10)
+
+password_label = tk.Label(root, text="密码：")
+password_label.grid(row=1, column=0, padx=10, pady=10)
+password_entry = tk.Entry(root, show="*")
+password_entry.grid(row=1, column=1, padx=10, pady=10)
+
+# 添加登录按钮
+login_button = tk.Button(root, text="登录", command=login)
+login_button.grid(row=2, columnspan=2, padx=10, pady=10)
+
+# 设置窗口大小
+root.geometry("400x300")
+# 设置输入框居中
+root.grid_rowconfigure(0, weight=1)
+root.grid_rowconfigure(1, weight=1)
+root.grid_columnconfigure(0, weight=1)
+root.grid_columnconfigure(1, weight=1)
 
 
-#select * from student inner join grade on name where score>89
-#select * from student inner join grade on name
-#select * from student where age>22
-#select * from student order by age asc
-#select * from student
-#select name,age from student
-#select name,age,score,id from student inner join grade on name where score>89 order by age asc
-#select student.id,student.location,grade.score,grade.subject from student,grade where student.name=grade.name
-
-if __name__ == "__main__":
-    main()
+# 运行主循环
+root.mainloop()
