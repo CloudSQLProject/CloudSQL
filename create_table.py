@@ -230,11 +230,6 @@ def create_table_main():
 
             add_record(table_name, values)
 
-
-
-        elif command == 'drop' and len(parts) == 3 and parts[1] == 'table':
-            drop_table(table_name)
-
         # drop table your_table_name
         elif command == 'drop':
             match = re.search(r'drop\s+table\s+[\'"]?(\w+)[\'"]?', sql_statement)
