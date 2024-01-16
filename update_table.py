@@ -118,7 +118,6 @@ def handle_update_sql(sql):
         update_part(table_name, condition, natures)
         return
 
-
 handle_update_sql("update student set name='zhaoshuai',age=88 where id<3")
 # handle_update_sql("update student set name='zhaoshuai',age=565")
 
