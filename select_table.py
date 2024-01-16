@@ -11,7 +11,7 @@ def parse_where_conditions(where_condition):
     for sub_condition in sub_conditions:
         and_conditions = re.split(r'\b(?: and )\b', sub_condition)
         conditions.append(and_conditions)
-        print (conditions)
+        #print (conditions)
     return conditions
 
 
@@ -123,7 +123,8 @@ def inner_join(table1, table2, join_key, select_fields, where_condition, order_b
         values = list(row.values())
         rows.append(values)
         max_lengths = [max(max_lengths[i], len(str(values[i])) if values[i] else 0) for i in range(len(values))]
-    draw_table(rows, keys, max_lengths)
+    #draw_table(rows, keys, max_lengths)
+    print(result)
     return result
 
 
@@ -180,8 +181,10 @@ def select_column(table_name, aim, where_condition,order_by_column, order_by_ord
             values = list(row.values())
             rows.append(values)
             max_lengths = [max(max_lengths[i], len(str(values[i])) if values[i] else 0) for i in range(len(values))]
-        draw_table(rows, keys, max_lengths)
+        #draw_table(rows, keys, max_lengths)
+        print(result)
         return result
+
 
 
 
@@ -200,34 +203,28 @@ def extract_tables_from_inner_join(user_input):
 
 
 
-def main():
-    global conditions
-    conditions = []
-    while True:
-        conditions = []
-        user_input = input("Enter Command: ")
-        aim = None
-        if 'inner join' in user_input:
-            select_content, table1, table2, key, where_content = extract_tables_from_inner_join(user_input)
-            if select_content and table1 and table2 and key:
-                if where_content:
-                    aim, where_condition, order_by_column, order_by_order = get_user_input_inner_join(user_input)
-                    if key not in table_columns[table1] or key not in table_columns[table2]:
-                        print("Table cannot be joined via this key")
-                        break
-                    if aim is None:
-                        aim = table_columns[table1] + table_columns[table2]
-                    inner_join(table1, table2, key, aim, where_condition, order_by_column, order_by_order)
-                else:
-                    if aim is None:
-                        aim = table_columns[table1] + table_columns[table2]
-                    inner_join(table1, table2, key, aim, None, order_by_column, order_by_order)
-        else:
-            aim, table, where_condition, order_by_column, order_by_order = get_user_input(user_input)
-            if aim == ['*']:
-                select_all(table, where_condition, order_by_column, order_by_order)
+def execute_sql_query(user_input, order_by_column=None, order_by_order=None):
+    aim = None
+    if 'inner join' in user_input:
+        select_content, table1, table2, key, where_content = extract_tables_from_inner_join(user_input)
+        if select_content and table1 and table2 and key:
+            if where_content:
+                aim, where_condition, order_by_column, order_by_order = get_user_input_inner_join(user_input)
+                if key not in table_columns[table1] or key not in table_columns[table2]:
+                    return "Table cannot be joined via this key"
+                if aim is None:
+                    aim = table_columns[table1] + table_columns[table2]
+                return inner_join(table1, table2, key, aim, where_condition, order_by_column, order_by_order)
             else:
-                select_column(table, aim, where_condition, order_by_column, order_by_order)
+                if aim is None:
+                    aim = table_columns[table1] + table_columns[table2]
+                return inner_join(table1, table2, key, aim, None, order_by_column, order_by_order)
+    else:
+        aim, table, where_condition, order_by_column, order_by_order = get_user_input(user_input)
+        if aim == ['*']:
+            return select_all(table, where_condition, order_by_column, order_by_order)
+        else:
+            return select_column(table, aim, where_condition, order_by_column, order_by_order)
 
 
 #select * from student inner join grade on name where score>89
@@ -238,5 +235,3 @@ def main():
 #select name,age from student
 #select name,age,score,id from student inner join grade on name where score>89 order by age asc
 
-if __name__ == "__main__":
-    main()
