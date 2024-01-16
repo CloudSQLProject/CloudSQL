@@ -4,63 +4,65 @@ import re
 import field
 import table_format
 
-
-
-
 import shutil
+
 table_keys = {}
 table_columns = {}
 
-def create_table(table_name, columns:field.Field):
-    #columns[0].name
-    print(columns[0].name)#参数可以传递 类型是field
+
+def create_table(table_name, columns: field.Field):
+    # columns[0].name
+    print(columns[0].name)  # 参数可以传递 类型是field
     print(vars(columns[0]))
     directory = "dir/user_default/db0"  # 目标目录
     table_directory = os.path.join(directory, table_name)
-    if  os.path.exists(table_directory):
+    if os.path.exists(table_directory):
         print(f'Table {table_name} already exists')
     else:
-        test_table= table_format.Table(table_name,columns)
+        test_table = table_format.Table(table_name, columns)
         test_table.save()
 
 
-def find_id_with_primary_key(datas, primary_key_value):
-    for data in datas:
-        if data.get('primary_key') == 'key':
-            return data.get('name')
-
-
-primary_keys = set()
-
-def load_existing_data(table_file):
-    global primary_keys
-    if os.path.exists(table_file):
-        with open(table_file, 'r') as f:
-            existing_data = json.load(f)
-            for record in existing_data:
-                primary_key_value = record.get('id')  # 假设主键的字段名为 'id'
-                if primary_key_value:
-                    primary_keys.add(primary_key_value)
-    else:
-        print(f'File {table_file} does not exist')
-
-
-
-
 def add_record(table_name, values):
-    directory = "dir/user_default/db0"  # 目标目录
+    directory = "dir/user_default/db0"  # 目标目录d
     table_directory = os.path.join(directory, table_name)
     table_file = table_directory + f'/{table_name}.json'
+    # table_file = f'{table_file}.json'
     table_struct = table_directory + f'/{table_name}_struct.json'
+<<<<<<< HEAD
     load_existing_data(table_file)
     if os.path.exists(table_file):
         with open(table_struct, 'r') as file:
             datas = json.load(file)
         elements = values.split(',')
         if len(elements) != len(datas):
+=======
+    print(table_file + "第一阶段测试")
+    print(table_struct)
+    # 表名存在就开始找字典里字段以jason插入数据
+    if os.path.exists(table_file):
+        with open(table_struct, 'r') as file:
+            datas = json.load(file)
+        print(datas)
+        name = []
+        for data in datas:
+            name.append(data['name'])
+            print(data)
+        # columns = table_columns.get(table_name, [])
+        print(name)
+        # 处理values 将其变为jason格式
+        ele = values.split(',')
+        print(ele)
+
+        if len(values) != len(datas):
+>>>>>>> ca9cbabc8add84b4fb316a2648bede96b5ccb471
             print(f'Error: Number of values does not match the number of columns for table {table_name}')
             return
+
+            # 判断是否由主键冲突,也就是找到字段里主键和扫描文件里主键元素集,插入的不能冲突
+
         else:
+<<<<<<< HEAD
             primary_key_value = None
             for i in range(len(datas)):
                 if datas[i]['primary_key'] == 'key':
@@ -83,13 +85,15 @@ def add_record(table_name, values):
             with open(table_file, 'w') as f:
                 json.dump(existing_data, f, indent=4)  # 将数据写入 JSON 文件中，格式化缩进为4个空格
 
+=======
+            with open(table_file, 'w') as file:
+                json.dump(data, file, indent=4)
+>>>>>>> ca9cbabc8add84b4fb316a2648bede96b5ccb471
             print('Record added successfully')
     else:
         print(f'Table {table_name} does not exist')
 
 
-
-#insert table table_name values(1,fucking)
 def drop_table(table_name):
     directory = "dir/user_default/db0"  # 目标目录
     table_directory = os.path.join(directory, table_name)
@@ -109,28 +113,32 @@ def rename_table(old_table_name, new_table_name):
     directory = "dir/user_default/db0"  # 目标目录
     old_table_directory = os.path.join(directory, old_table_name)
     new_table_directory = os.path.join(directory, new_table_name)
+
     # 检查原表是否存在
     if os.path.exists(old_table_directory):
         try:
-            # 重命名目录
+
             os.rename(old_table_directory, new_table_directory)
-            # 遍历新目录下的所有文件
+
+         # 遍历新目录下的所有文件
             for root, dirs, files in os.walk(new_table_directory):
                 for file in files:
                     # 判断文件名是否以旧表名前缀开头
                     if file.startswith(f"{old_table_name}"):
                         # 构造新文件名
                         new_file_name = file.replace(f"{old_table_name}", f"{new_table_name}")
+
                         # 构造文件的完整路径
                         old_file_path = os.path.join(root, file)
                         new_file_path = os.path.join(root, new_file_name)
+
                         # 进行重命名操作
                         os.rename(old_file_path, new_file_path)
+
             print(f"Table '{old_table_name}' renamed to '{new_table_name}' successfully")
         except OSError as e:
             print(f"重命名表时出错: {e.strerror}")
-    else:
-        print(f"Table '{old_table_name}' does not exist. Rename operation aborted.")
+
 
 def delete_column(table_name, column_name):
     # 构建表格文件路径
@@ -161,9 +169,21 @@ def delete_column(table_name, column_name):
     else:
         print(f'Table {table_name} does not exist')
 
+
+def edit_table(table_name, nature):  # EDIT TABLE TableName（Field_Name  Type  KEY_Flag  NULL_Flag）
+
+    directory = "dir/user_default/db0"  # 目标目录
+    table_directory = os.path.join(directory, table_name)
+    table_file = table_directory + f'{table_name}.json'
+    if os.path.exists(table_directory):
+        with open(f'{table_directory}/{table_name}.json') as f:
+            contents=json.load(f)
+
+
+
 def create_table_main():
-    #理想中的sql语句
-    #create table table_name(id int key not_null, name varchar(20) not_key not_null); 对应field字段每一个属性
+    # 理想中的sql语句
+    # create table table_name(id int key not_null, name varchar(20) not_key not_null); 对应field字段每一个属性
     global fields, table_name
     while True:
         user_input = input("Enter command: ")
@@ -172,11 +192,10 @@ def create_table_main():
         # 使用正则表达式匹配最外层括号内的内容
         parts = user_input.split()
 
-
-        command = parts[0]#在以上的sql中只有part[0]是有效的识别命令符
+        command = parts[0]  # 在以上的sql中只有part[0]是有效的识别命令符
         print(command)
         # 使用正则表达式匹配整个create table语句
-        if command == 'create' :
+        if command == 'create':
             match = re.search(r'create table \w+\((.*)\)', sql_statement)  # 使用正则表达式匹配最外层括号内的内容
             if match:
                 content_inside_outer_parentheses = match.group(1)  # 获取最外层括号内的内容
@@ -184,26 +203,26 @@ def create_table_main():
                 print("Columns:", fields)
             else:
                 print("sql语句格式错误")
-            #columns = [column.strip(',') for column in parts[4:]]
+            # columns = [column.strip(',') for column in parts[4:]]
             match = re.search(r'create table (\w+)\(', sql_statement)  # 使用正则表达式匹配整个create table语句，并提取表名部分
             if match:
                 table_name = match.group(1)  # 获取表名
                 print("Table Name:", table_name)
-            #已知表名和各属性之后,创建sql语句对应的文件
-            struct_table_list=[]
+            # 已知表名和各属性之后,创建sql语句对应的文件
+            struct_table_list = []
             for column in fields:
-                struct=column.split()
+                struct = column.split()
                 print(struct)
                 print(column)
-                struct_table= field.Field(struct[0], struct[1], struct[2], struct[3])
+                struct_table = field.Field(struct[0], struct[1], struct[2], struct[3])
                 struct_table_list.append(struct_table)
 
             print(struct_table_list)
             create_table(table_name, struct_table_list)
             print("over")
 
-        #chu li insert yu ju  ji ben ge shi wei
-
+        # chu li insert yu ju  ji ben ge shi wei
+        # insert table table_name values(1,"fucking")
 
         elif command == 'insert' and len(parts) > 3:
             # 定义匹配的正则表达式模式
@@ -224,8 +243,6 @@ def create_table_main():
 
 
 
-        elif command == 'drop' and len(parts) == 3 and parts[1] == 'table':
-            drop_table(table_name)
 
         # drop table your_table_name
         elif command == 'drop':
@@ -249,6 +266,20 @@ def create_table_main():
                 rename_table(old_table_name, new_table_name)
             else:
                 print("Invalid rename table command")
+
+        elif command == 'edit':
+            match = re.search(r'edit table \w+\((.*)\)', sql_statement)  # 使用正则表达式匹配最外层括号内的内容
+            if match:
+                content_inside_outer_parentheses = match.group(1)  # 获取最外层括号内的内容
+                fields = [x.strip() for x in content_inside_outer_parentheses.split(',')]  # 以逗号为分隔符分割内容成列表
+                print("Columns:", fields)
+            else:
+                print("sql语句格式错误")
+            match = re.search(r'edit table (\w+)\(', sql_statement)  # 使用正则表达式匹配整个create table语句，并提取表名部分
+            if match:
+                table_name = match.group(1)  # 获取表名
+                print("Table Name:", table_name)
+            edit_table(table_name,fields)
         else:
             print('Invalid command')
 
