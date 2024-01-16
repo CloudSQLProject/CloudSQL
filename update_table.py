@@ -61,7 +61,7 @@ def update_all(table_name, natures): # 例：(update table_name set key1=value1,
     for pair in pairs:
         key, value = pair.strip().split('=')  # 键值对
         for content in contents:
-            content[key.strip()] = value.strip()  # 遍历所用结果并赋值
+            content[key.strip()] = value.strip()  # 遍历所有结果并赋值
     with open(f'{table_name}.json', 'r+') as f:
         json.dump(contents, f, indent=4)
 
