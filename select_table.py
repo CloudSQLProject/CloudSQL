@@ -11,7 +11,9 @@ def parse_where_conditions(where_condition):
     for sub_condition in sub_conditions:
         and_conditions = re.split(r'\b(?: and )\b', sub_condition)
         conditions.append(and_conditions)
+        print (conditions)
     return conditions
+
 
 def apply_condition(row, condition):
     if isinstance(condition, list):
@@ -31,7 +33,6 @@ def apply_condition(row, condition):
             return row.get(condition_key) >= condition_value
         elif condition_op == '<=':
             return row.get(condition_key) <= condition_value
-
     return False
 
 
@@ -50,7 +51,7 @@ def get_user_input(user_input):
         if len(parts)>4 and parts[4].lower() == 'where':
             where_condition = ' '.join(parts[5:])
             conditions = parse_where_conditions(where_condition)
-            print(conditions)
+            #print(conditions)
         if 'order' in parts and 'by' in parts:
             order_by_index = parts.index('order')
             order_by_column = parts[order_by_index + 2]
@@ -66,14 +67,14 @@ def get_user_input_inner_join(user_input):
         aim = select_match.group(1).split(',')
         where_condition = where_match.group(1)
         conditions = parse_where_conditions(where_condition)
-        print(conditions)
+        #print(conditions)
         order_by_column = None
         order_by_order = None
         if order_by_match:
             order_by_info = order_by_match.group(1).split()
             order_by_column = order_by_info[0]
             order_by_order = order_by_info[1] if len(order_by_info) > 1 else 'asc'
-            print(order_by_column, order_by_order)
+            #print(order_by_column, order_by_order)
         return aim, conditions, order_by_column, order_by_order
     else:
         print("Invalid command")
@@ -111,10 +112,8 @@ def inner_join(table1, table2, join_key, select_fields, where_condition, order_b
                     else:
                         result_row = {field: combined_row[field] for field in select_fields}
                     result.append(result_row)
-
     if order_by_column:
         result.sort(key=lambda x: x.get(order_by_column, 0), reverse=(order_by_order.lower() == 'desc'))
-
     keys = result[0].keys() if result else []
     max_lengths = [len(str(key)) for key in keys]
     rows = []
@@ -233,7 +232,8 @@ def main():
 #select * from student order by age asc
 #select * from student
 #select name,age from student
-#select * from student inner join grade on name where score>89 order by age asc
+#select name,age,score,id from student inner join grade on name where score>89 order by age asc
+#select student.id,student.location,grade.score,grade.subject from student,grade where student.name=grade.name
 
 if __name__ == "__main__":
     main()
