@@ -23,21 +23,20 @@ def create_table(table_name, columns: field.Field):
         test_table.save()
 
 
-primary_keys = set()
-
-
 def add_record(table_name, values):
     directory = "dir/user_default/db0"  # 目标目录d
     table_directory = os.path.join(directory, table_name)
     table_file = table_directory + f'/{table_name}.json'
     # table_file = f'{table_file}.json'
     table_struct = table_directory + f'/{table_name}_struct.json'
+<<<<<<< HEAD
     load_existing_data(table_file)
     if os.path.exists(table_file):
         with open(table_struct, 'r') as file:
             datas = json.load(file)
         elements = values.split(',')
         if len(elements) != len(datas):
+=======
     print(table_file + "第一阶段测试")
     print(table_struct)
     # 表名存在就开始找字典里字段以jason插入数据
@@ -56,12 +55,14 @@ def add_record(table_name, values):
         print(ele)
 
         if len(values) != len(datas):
+>>>>>>> ca9cbabc8add84b4fb316a2648bede96b5ccb471
             print(f'Error: Number of values does not match the number of columns for table {table_name}')
             return
 
             # 判断是否由主键冲突,也就是找到字段里主键和扫描文件里主键元素集,插入的不能冲突
 
         else:
+<<<<<<< HEAD
             primary_key_value = None
             for i in range(len(datas)):
                 if datas[i]['primary_key'] == 'key':
@@ -84,9 +85,10 @@ def add_record(table_name, values):
             with open(table_file, 'w') as f:
                 json.dump(existing_data, f, indent=4)  # 将数据写入 JSON 文件中，格式化缩进为4个空格
 
+=======
             with open(table_file, 'w') as file:
                 json.dump(data, file, indent=4)
-
+>>>>>>> ca9cbabc8add84b4fb316a2648bede96b5ccb471
             print('Record added successfully')
     else:
         print(f'Table {table_name} does not exist')
