@@ -61,13 +61,21 @@ def get_user_input_join(user_input):
     global conditions
     select_match = re.search(r'select (.*?) from', user_input, re.I)
     where_match = re.search(r'where (.*)', user_input, re.I)
-
+    order_by_match = re.search(r'order by(.*)', user_input, re.I)
     if select_match and where_match:
         aim = select_match.group(1).split(',')
         where_condition = where_match.group(1)
         conditions = parse_where_conditions(where_condition)
         print(conditions)
-        return aim, conditions
+        if order_by_match:
+            order_by_info = order_by_match.group(1).split()
+            order_by_column = order_by_info[0]
+            order_by_order = order_by_info[1] if len(order_by_info) > 1 else 'asc'
+            print(order_by_column, order_by_order)
+        else:
+            order_by_column = None
+            order_by_order = None
+        return aim, conditions, order_by_column, order_by_order
     else:
         print("Invalid command")
         return None, None
@@ -216,12 +224,13 @@ def main():
                 select_column(table, aim, where_condition, order_by_column, order_by_order)
 
 
-#select * from student inner join grade on id where score>89
+#select * from student inner join grade on name where score>89
 #select * from student inner join grade on name
 #select * from student where age>22
 #select * from student order by age asc
 #select * from student
 #select name,age from student
+#select * from student inner join grade on name where score>89 order by age asc
 
 if __name__ == "__main__":
     main()

@@ -99,6 +99,7 @@ def delete_column(table_name, column_name):
 def create_table_main():
     #理想中的sql语句
     #create table table_name(id int key not_null, name varchar(20) not_key not_null); 对应field字段每一个属性
+    global fields, table_name
     while True:
         user_input = input("Enter command: ")
         # 定义要匹配的字符串
