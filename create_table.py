@@ -24,51 +24,59 @@ def create_table(table_name, columns:field.Field):
         test_table.save()
 
 
+def find_id_with_primary_key(datas, primary_key_value):
+    for data in datas:
+        if data.get('primary_key') == 'key':
+            return data.get('name')
+
+
+primary_keys = set()
+
 
 def add_record(table_name, values):
-
-    directory = "dir/user_default/db0"  # 目标目录d
+    directory = "dir/user_default/db0"  # 目标目录
     table_directory = os.path.join(directory, table_name)
-    table_file=table_directory+f'/{table_name}.json'
-    #table_file = f'{table_file}.json'
+    table_file = table_directory + f'/{table_name}.json'
     table_struct = table_directory + f'/{table_name}_struct.json'
-    print(table_file+"第一阶段测试")
-    print(table_struct)
-    #表名存在就开始找字典里字段以jason插入数据
+
     if os.path.exists(table_file):
         with open(table_struct, 'r') as file:
             datas = json.load(file)
-        print(datas)
-        name=[]
-        for data in datas:
-            name.append(data['name'])
-            print(data)
-        #columns = table_columns.get(table_name, [])
-        print(name)
-        #处理values 将其变为jason格式
-        ele=values.split(',')
-        print(ele)
 
+        elements = values.split(',')
 
-        if len(values) != len(datas):
+        if len(elements) != len(datas):
             print(f'Error: Number of values does not match the number of columns for table {table_name}')
             return
-
-      #判断是否由主键冲突,也就是找到字段里主键和扫描文件里主键元素集,插入的不能冲突
-
-
-            print('Record already exists')
         else:
-            data.append(record)
-            with open(table_file, 'w') as file:
-                json.dump(data, file, indent=4)
+            primary_key_values = {}  # 用字典来存储主键和对应的值
+            for i in range(len(datas)):
+                if datas[i]['primary_key'] == 'key':
+                    primary_key_value = elements[i]
+                    if primary_key_value in primary_key_values.values():  # 检查主键是否重复
+                        print('Record with the same primary key already exists')
+                        return
+                    else:
+                        primary_key_values[datas[i]['name']] = primary_key_value
+
+            record = {}  # 用字典来存储要写入的记录
+            for i in range(len(datas)):
+                record[datas[i]['name']] = elements[i]
+
+            with open(table_file, 'r') as f:
+                existing_data = json.load(f)  # 读取已有的数据
+
+            existing_data.append(record)  # 将新记录添加到已有数据中
+
+            with open(table_file, 'w') as f:
+                json.dump(existing_data, f, indent=4)  # 将数据写入 JSON 文件中，格式化缩进为4个空格
+
             print('Record added successfully')
     else:
         print(f'Table {table_name} does not exist')
 
 
-
-
+#insert table table_name values(1,"fucking")
 def drop_table(table_name):
     directory = "dir/user_default/db0"  # 目标目录
     table_directory = os.path.join(directory, table_name)
@@ -175,7 +183,7 @@ def create_table_main():
             print("over")
 
         #chu li insert yu ju  ji ben ge shi wei
-        #insert table table_name values(1,"fucking")
+
 
         elif command == 'insert' and len(parts) > 3:
             # 定义匹配的正则表达式模式
