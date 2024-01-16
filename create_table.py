@@ -5,6 +5,12 @@ import field
 import table_format
 
 
+
+
+import shutil
+table_keys = {}
+table_columns = {}
+
 def create_table(table_name, columns:field.Field):
     #columns[0].name
     print(columns[0].name)#参数可以传递 类型是field
@@ -61,27 +67,41 @@ def add_record(table_name, values):
         print(f'Table {table_name} does not exist')
 
 
+
+
 def drop_table(table_name):
-    table_file = f'./{table_name}.json'
-    if os.path.exists(table_file):
+    directory = "dir/user_default/db0"  # 目标目录
+    table_directory = os.path.join(directory, table_name)
+
+    if os.path.exists(table_directory):
         try:
-            os.remove(table_file)  # 删除table对应json文件
+            # 关闭文件句柄并删除文件/目录
+            shutil.rmtree(table_directory)  # 使用递归删除整个目录
             print('Table deleted successfully')
         except OSError as e:
-            print(f"删除文件{table_name}时出错: {e.strerror}")
-
-
-def rename_table(table_name_old, table_name_new):
-    table_file_old = f'./{table_name_old}.json'
-    table_file_new = f'./{table_name_new}.json'
-    if os.path.exists(table_file_old):
-        if not os.path.exists(table_file_new):
-            os.rename(table_file_old, table_file_new)
-            print(f'Table {table_name_new} renamed successfully')
-        else:
-            print(f"The new name {table_name_new} exists")
+            print(f"删除文件{table_name}时出错: {e}")
     else:
-        print(f"Table {table_name_old} not exists")
+        print(f'Table {table_name} does not exist')
+
+
+def rename_table(old_table_name, new_table_name):
+    directory = "dir/user_default/db0"  # 目标目录
+    old_table_directory = os.path.join(directory, old_table_name)
+    new_table_directory = os.path.join(directory, new_table_name)
+    # 检查原表是否存在
+    if os.path.exists(old_table_directory):
+        # 检查新表是否已经存在
+        if os.path.exists(new_table_directory):
+            print(f"Table '{new_table_name}' already exists. Rename operation aborted.")
+        else:
+            try:
+                # 进行重命名操作
+                os.rename(old_table_directory, new_table_directory)
+                print(f"Table '{old_table_name}' renamed to '{new_table_name}' successfully")
+            except OSError as e:
+                print(f"重命名表时出错: {e.strerror}")
+    else:
+        print(f"Table '{old_table_name}' does not exist. Rename operation aborted.")
 
 
 def delete_column(table_name, column_name):
@@ -116,6 +136,7 @@ def delete_column(table_name, column_name):
 def create_table_main():
     #理想中的sql语句
     #create table table_name(id int key not_null, name varchar(20) not_key not_null); 对应field字段每一个属性
+    global fields, table_name
     while True:
         user_input = input("Enter command: ")
         # 定义要匹配的字符串
@@ -174,13 +195,32 @@ def create_table_main():
             add_record(table_name, values)
 
 
+
         elif command == 'drop' and len(parts) == 3 and parts[1] == 'table':
             drop_table(table_name)
+
+        # drop table your_table_name
+        elif command == 'drop':
+            match = re.search(r'drop\s+table\s+[\'"]?(\w+)[\'"]?', sql_statement)
+            if match:
+                table_name = match.group(1)  # 获取表名
+                # 调用删除表的函数，传递表名
+                drop_table(table_name)
+            else:
+                print("Invalid drop table command")
+
         elif command == 'delete' and len(parts) > 3 and parts[3] == 'columns':
             columns = parts[4:]
             delete_column(table_name, *columns)  # 调用删除记录的函数
-        elif command == 'rename' and len(parts) == 4 and parts[1] == 'table':
-            rename_table(parts[2], parts[3])
+        elif command == 'rename':
+            match = re.search(r'rename\s+table\s+(\w+)\s+(\w+)', sql_statement, re.IGNORECASE)
+            if match:
+                old_table_name = match.group(1)  # 获取原表名
+                new_table_name = match.group(2)  # 获取新表名
+                # 调用重命名表的函数，传递原表名和新表名
+                rename_table(old_table_name, new_table_name)
+            else:
+                print("Invalid rename table command")
         else:
             print('Invalid command')
 

@@ -11,7 +11,9 @@ def parse_where_conditions(where_condition):
     for sub_condition in sub_conditions:
         and_conditions = re.split(r'\b(?: and )\b', sub_condition)
         conditions.append(and_conditions)
+        print (conditions)
     return conditions
+
 
 def apply_condition(row, condition):
     if isinstance(condition, list):
@@ -31,7 +33,6 @@ def apply_condition(row, condition):
             return row.get(condition_key) >= condition_value
         elif condition_op == '<=':
             return row.get(condition_key) <= condition_value
-
     return False
 
 
@@ -50,27 +51,34 @@ def get_user_input(user_input):
         if len(parts)>4 and parts[4].lower() == 'where':
             where_condition = ' '.join(parts[5:])
             conditions = parse_where_conditions(where_condition)
-            print(conditions)
+            #print(conditions)
         if 'order' in parts and 'by' in parts:
             order_by_index = parts.index('order')
             order_by_column = parts[order_by_index + 2]
             order_by_order = parts[order_by_index + 3] if order_by_index + 3 < len(parts) else 'asc'
         return aim,table,conditions, order_by_column, order_by_order
 
-def get_user_input_join(user_input):
+def get_user_input_inner_join(user_input):
     global conditions
     select_match = re.search(r'select (.*?) from', user_input, re.I)
     where_match = re.search(r'where (.*)', user_input, re.I)
-
+    order_by_match = re.search(r'order by (.*)', user_input, re.I)
     if select_match and where_match:
         aim = select_match.group(1).split(',')
         where_condition = where_match.group(1)
         conditions = parse_where_conditions(where_condition)
-        print(conditions)
-        return aim, conditions
+        #print(conditions)
+        order_by_column = None
+        order_by_order = None
+        if order_by_match:
+            order_by_info = order_by_match.group(1).split()
+            order_by_column = order_by_info[0]
+            order_by_order = order_by_info[1] if len(order_by_info) > 1 else 'asc'
+            #print(order_by_column, order_by_order)
+        return aim, conditions, order_by_column, order_by_order
     else:
         print("Invalid command")
-        return None, None
+        return None, None, None, None
 
 
 def draw_table(data, keys, max_lengths):
@@ -89,8 +97,7 @@ def select_all(table_name,where_condition,order_by_column, order_by_order):
     return select_column(table_name,table_columns[table_name],where_condition,order_by_column, order_by_order)
 
 
-def inner_join(table1, table2, join_key, select_fields, where_condition):
-    #inner_join('student', 'grade', 'name', ['name', 'age', 'location','subject','score'], ['score=99'])
+def inner_join(table1, table2, join_key, select_fields, where_condition, order_by_column, order_by_order):
     with open(f'{table1}.json') as f1, open(f'{table2}.json') as f2:
         data1 = json.load(f1)
         data2 = json.load(f2)
@@ -100,8 +107,13 @@ def inner_join(table1, table2, join_key, select_fields, where_condition):
             if row1[join_key] == row2[join_key]:
                 combined_row = {**row1, **row2}
                 if not where_condition or all(apply_condition(combined_row, condition) for condition in where_condition):
-                    result_row = {field: combined_row[field] for field in select_fields}
+                    if select_fields == ['*']:
+                        result_row = combined_row
+                    else:
+                        result_row = {field: combined_row[field] for field in select_fields}
                     result.append(result_row)
+    if order_by_column:
+        result.sort(key=lambda x: x.get(order_by_column, 0), reverse=(order_by_order.lower() == 'desc'))
     keys = result[0].keys() if result else []
     max_lengths = [len(str(key)) for key in keys]
     rows = []
@@ -170,13 +182,14 @@ def select_column(table_name, aim, where_condition,order_by_column, order_by_ord
 
 
 def extract_tables_from_inner_join(user_input):
-    else_match = re.search(r'select (.*?) from .* where (.*)', user_input, re.I)
-    match = re.search(r'select .* from (\w+) inner join (\w+) on (\w+)', user_input, re.I)
-    if else_match and match:
-        select_content, where_content = else_match.groups()
-        table1, table2, key = match.groups()
+    match_with_where = re.search(r'select (.*?) from (\w+) inner join (\w+) on (\w+) where (.*)', user_input, re.I)
+    match_without_where = re.search(r'select (.*?) from (\w+) inner join (\w+) on (\w+)', user_input, re.I)
+    if match_with_where:
+        select_content, table1, table2, key, where_content = match_with_where.groups()
         return select_content, table1, table2, key, where_content
-
+    elif match_without_where:
+        select_content, table1, table2, key = match_without_where.groups()
+        return select_content, table1, table2, key, None
     else:
         return None, None, None, None, None
 
@@ -189,20 +202,22 @@ def main():
     while True:
         conditions = []
         user_input = input("Enter Command: ")
+        aim = None
         if 'inner join' in user_input:
-            if 'where' in user_input:
-                select_content, table1, table2, key, where_content = extract_tables_from_inner_join(user_input)
-                #print(select_content, table1, table2, key, where_content)
-                aim,where_condition = get_user_input_join(user_input)
-                if key not in table_columns[table1] or key not in table_columns[table2]:
-                    print("Table cannot be joined via this key")
-                    break
-                if aim == ['*']:
-                    inner_join(table1, table2, key, table_columns[table1] + table_columns[table2], where_condition)
+            select_content, table1, table2, key, where_content = extract_tables_from_inner_join(user_input)
+            if select_content and table1 and table2 and key:
+                if where_content:
+                    aim, where_condition, order_by_column, order_by_order = get_user_input_inner_join(user_input)
+                    if key not in table_columns[table1] or key not in table_columns[table2]:
+                        print("Table cannot be joined via this key")
+                        break
+                    if aim is None:
+                        aim = table_columns[table1] + table_columns[table2]
+                    inner_join(table1, table2, key, aim, where_condition, order_by_column, order_by_order)
                 else:
-                    inner_join(table1, table2, key, aim, where_condition)
-            else:
-                ...
+                    if aim is None:
+                        aim = table_columns[table1] + table_columns[table2]
+                    inner_join(table1, table2, key, aim, None, order_by_column, order_by_order)
         else:
             aim, table, where_condition, order_by_column, order_by_order = get_user_input(user_input)
             if aim == ['*']:
@@ -210,7 +225,15 @@ def main():
             else:
                 select_column(table, aim, where_condition, order_by_column, order_by_order)
 
-#select * from student inner join grade on id where grade < 99 order by age desc
+
+#select * from student inner join grade on name where score>89
+#select * from student inner join grade on name
+#select * from student where age>22
 #select * from student order by age asc
+#select * from student
+#select name,age from student
+#select name,age,score,id from student inner join grade on name where score>89 order by age asc
+#select student.id,student.location,grade.score,grade.subject from student,grade where student.name=grade.name
+
 if __name__ == "__main__":
     main()
