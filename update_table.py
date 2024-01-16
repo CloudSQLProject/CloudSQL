@@ -7,6 +7,46 @@ from CloudSQL.select_table import apply_condition
 from CloudSQL.shared_data import table_keys, table_columns
 
 
+def type_legal(value, key):
+    if key == 'int':
+        if re.match('(\+|\-)?[0-9]+$', value) or value == '':  # value 可以== ''， 检查其是否有约束 not null
+            return True
+        else:
+            return False
+    if key == 'varchar(20)':
+        if re.match("'(.+)?'$", value):
+            return True
+        else:
+            return False
+    if key == 'char':
+        if re.match("'(.+)?'$", value) and len(value) <= 3:
+            return True
+        else:
+            return False
+    if key == 'double':
+        if re.match('(\+|\-)?[0-9]+\.?[0-9]+$', value) or value == '':
+            return True
+        else:
+            return False
+    return False
+
+
+def get_nature_and_type_from_dictionary(table_name):
+    """ 从字典中获取表的字段名和属性 """
+    dictionary = {}
+    directory = "dir/user_default/db0"  # 目标目录
+    table_directory = os.path.join(directory, table_name)
+    table_file = table_directory + f'/{table_name}_struct.json'
+    with open(table_file) as f:
+        contents = json.load(f)
+    for content in contents:
+        dictionary[content['name']] = content['data_type']
+    return dictionary
+    # for item in dbms_settings.dictionary[dbms_settings.current_database]['tables'][table_name]['items']:
+    #     nature_arr.append(item['nature'])
+    #     type_arr.append(item['type'])
+
+
 # 是select_column, 若update语句有where条件，则查询，修改查询结果，在写回文件
 # 如果select_column有return可以直接使用select_column
 def update_select(table_name, aim, where_condition):
@@ -17,8 +57,9 @@ def update_select(table_name, aim, where_condition):
     else:
         print(f"Error: Table {table_name} not found in table_keys")
         return
-
-    table_file = f'./{table_name}.json'
+    directory = "dir/user_default/db0"  # 目标目录
+    table_directory = os.path.join(directory, table_name)
+    table_file = table_directory + f'/{table_name}.json'
     if not os.path.exists(table_file):
         print("Table does not exist")
         return []
@@ -54,34 +95,63 @@ def update_select(table_name, aim, where_condition):
 
 
 # 无where条件语句时
-def update_all(table_name, natures): # 例：(update table_name set key1=value1,key2=value2) <--natures=key1=value1,key2=value2
-    pairs = natures.split(',') # 逗号分隔
-    with open(f'{table_name}.json', 'r+') as f:
+def update_all(table_name,
+               natures):  # 例：(update table_name set key1=value1,key2=value2) <--natures=key1=value1,key2=value2
+    pairs = natures.split(',')  # 逗号分隔
+    directory = "dir/user_default/db0"  # 目标目录
+    table_directory = os.path.join(directory, table_name)
+    table_file = table_directory + f'/{table_name}.json'
+    my_dict = get_nature_and_type_from_dictionary(table_name)
+    with open(table_file, 'r') as f:
         contents = json.load(f)
     for pair in pairs:
         key, value = pair.strip().split('=')  # 键值对
-        for content in contents:
-            content[key.strip()] = value.strip()  # 遍历所有结果并赋值
-    with open(f'{table_name}.json', 'r+') as f:
+        if key in my_dict.keys():
+            if type_legal(value, my_dict[key]):
+                for content in contents:
+                    content[key.strip()] = value.strip()  # 遍历所有结果并赋值
+            else:
+                print(f'type error: {key} want {my_dict[key]} ')
+                return
+        else:
+            print(f'the column {key} does not exist')
+            return
+    with open(table_file, 'w') as f:
         json.dump(contents, f, indent=4)
+        print(f'update successful:{len(contents)} rows updated')
 
 
-def update_part(table_name, condition, natures):#例：(update table_name set key1=value1,key2=value2 where condition) <--natures=key1=value1,key2=value2
+def update_part(table_name, condition,
+                natures):  # 例：(update table_name set key1=value1,key2=value2 where condition) <--natures=key1=value1,key2=value2
+    directory = "dir/user_default/db0"  # 目标目录
+    table_directory = os.path.join(directory, table_name)
+    table_file = table_directory + f'/{table_name}.json'
     pairs = natures.split(',')
-    contents = update_select(table_name, table_columns[table_name], [[condition]]) #select执行结果
-    with open(f'{table_name}.json', 'r+') as f:
+    contents = update_select(table_name, table_columns[table_name], [[condition]])  # select执行结果
+    my_dict = get_nature_and_type_from_dictionary(table_name)
+    with open(table_file, 'r') as f:
         responses = json.load(f)
     for pair in pairs:
         key, value = pair.strip().split('=')
-        for content in contents:
-            content[key.strip()] = value.strip() # 赋值
-    for i, response in enumerate(responses): # responses是文件内容 content是修改后的select结果
+        if key in my_dict.keys():
+            if type_legal(value, my_dict[key]):
+                for content in contents:
+                    content[key.strip()] = value.strip()  # 赋值
+            else:
+                print(f'type error: {key} want {my_dict[key]} ')
+                return
+        else:
+            print(f'the column {key} does not exist')
+            return
+    for i, response in enumerate(responses):  # responses是文件内容 content是修改后的select结果
         for content in contents:
             if response['id'] == content['id']:
-                responses[i] = copy.deepcopy(content) # 遍历并按id位置写回
+                responses[i] = copy.deepcopy(content)  # 遍历并按id位置写回
                 break
-    with open(f'{table_name}.json', 'r+') as f:
+    with open(table_file, 'w') as f:
         json.dump(responses, f, indent=4)
+        print(f'update successful:{len(contents)} rows updated')
+
 
 def handle_update_sql(sql):
     """ 分析 update 语法"""
@@ -113,6 +183,10 @@ def handle_update_sql(sql):
         update_part(table_name, condition, natures)
         return
 
+# 正确情况
+# handle_update_sql("update student set name='gentleman',age=22 where id<3")
+# handle_update_sql("update student set name='zhao_shuai',age=23")
 
-handle_update_sql("update student set name='zhaoshuai',age=88 where id<3")
-# handle_update_sql("update student set name='zhaoshuai',age=565")
+# 错误情况
+# handle_update_sql("update student set name='TOM',age='Alice' where id=1")
+# 提示age want int
