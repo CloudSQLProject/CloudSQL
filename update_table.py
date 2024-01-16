@@ -83,7 +83,6 @@ def update_part(table_name, condition, natures):#例：(update table_name set ke
     with open(f'{table_name}.json', 'r+') as f:
         json.dump(responses, f, indent=4)
 
-
 def handle_update_sql(sql):
     """ 分析 update 语法"""
     is_all = False
