@@ -4,8 +4,7 @@ import re
 import field
 import table_format
 
-table_keys = {}
-table_columns = {}
+
 def create_table(table_name, columns:field.Field):
     #columns[0].name
     print(columns[0].name)#参数可以传递 类型是field
@@ -21,19 +20,37 @@ def create_table(table_name, columns:field.Field):
 
 
 def add_record(table_name, values):
-    table_file = f'./{table_name}.json'
+
+    directory = "dir/user_default/db0"  # 目标目录d
+    table_directory = os.path.join(directory, table_name)
+    table_file=table_directory+f'/{table_name}.json'
+    #table_file = f'{table_file}.json'
+    table_struct = table_directory + f'/{table_name}_struct.json'
+    print(table_file+"第一阶段测试")
+    print(table_struct)
+    #表名存在就开始找字典里字段以jason插入数据
     if os.path.exists(table_file):
-        with open(table_file, 'r') as file:
-            data = json.load(file)
-        columns = table_columns.get(table_name, [])
-        if not columns:
-            print(f'Columns for table {table_name} not found')
-            return
-        if len(values) != len(columns):
+        with open(table_struct, 'r') as file:
+            datas = json.load(file)
+        print(datas)
+        name=[]
+        for data in datas:
+            name.append(data['name'])
+            print(data)
+        #columns = table_columns.get(table_name, [])
+        print(name)
+        #处理values 将其变为jason格式
+        ele=values.split(',')
+        print(ele)
+
+
+        if len(values) != len(datas):
             print(f'Error: Number of values does not match the number of columns for table {table_name}')
             return
-        record = {column: value for column, value in zip(columns, values)}
-        if any(all(record.get(key) == value for key, value in row.items()) for row in data):
+
+      #判断是否由主键冲突,也就是找到字段里主键和扫描文件里主键元素集,插入的不能冲突
+
+
             print('Record already exists')
         else:
             data.append(record)
@@ -105,9 +122,7 @@ def create_table_main():
         sql_statement = user_input
         # 使用正则表达式匹配最外层括号内的内容
         parts = user_input.split()
-        # if len(parts) < 4:
-        #     print('Invalid command')
-        #     continue
+
 
         command = parts[0]#在以上的sql中只有part[0]是有效的识别命令符
         print(command)
@@ -138,13 +153,27 @@ def create_table_main():
             create_table(table_name, struct_table_list)
             print("over")
 
+        #chu li insert yu ju  ji ben ge shi wei
+        #insert table table_name values(1,"fucking")
 
-            command = parts[0]
-            table_name = parts[2]
+        elif command == 'insert' and len(parts) > 3:
+            # 定义匹配的正则表达式模式
+            pattern = r'insert table (\w+) values\(([^)]+)\)'
 
-        elif command == 'insert' and len(parts) > 3 and parts[3] == 'values':
-            values = [value.strip('(),') for value in parts[4:]]
+            # 使用正则表达式进行匹配
+            match = re.match(pattern, sql_statement)
+
+            if match:
+                table_name = match.group(1)
+                values = match.group(2)
+                print(f"Table name: {table_name}")
+                print(f"Values: {values}")
+            else:
+                print("illegal insert")
+
             add_record(table_name, values)
+
+
         elif command == 'drop' and len(parts) == 3 and parts[1] == 'table':
             drop_table(table_name)
         elif command == 'delete' and len(parts) > 3 and parts[3] == 'columns':
