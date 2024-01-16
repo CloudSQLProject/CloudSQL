@@ -3,7 +3,7 @@ import os
 import re
 import field
 import table_format
-
+import shutil
 table_keys = {}
 table_columns = {}
 def create_table(table_name, columns:field.Field):
@@ -44,8 +44,6 @@ def add_record(table_name, values):
         print(f'Table {table_name} does not exist')
 
 
-import os
-import shutil
 
 
 def drop_table(table_name):
