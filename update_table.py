@@ -14,7 +14,7 @@ def type_legal(value, key):
         else:
             return False
     if key == 'varchar(20)':
-        if re.match("'(.+)?'$", value):
+        if re.match("(.+)?$", value):
             return True
         else:
             return False
@@ -173,7 +173,7 @@ def handle_update_sql(sql):
         table_name = re.match(pattern_one, sql).group(1)
         natures = re.match(pattern_one, sql).group(2)
         condition = re.match(pattern_one, sql).group(3)
-    if not os.path.exists(f'{table_name}.json'):
+    if not os.path.exists(f'./dir/user_default/db0/{table_name}/{table_name}.json'):
         print('Table does not exist')
     # 更新全部数据
     if is_all:
@@ -190,3 +190,8 @@ def handle_update_sql(sql):
 # 错误情况
 # handle_update_sql("update student set name='TOM',age='Alice' where id=1")
 # 提示age want int
+
+if __name__ == "__main__":
+    while True:
+        sql_input = input()
+        handle_update_sql(sql_input)

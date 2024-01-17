@@ -3,25 +3,39 @@ import os
 import re
 import field
 import table_format
-
-
-
-
 import shutil
 table_keys = {}
 table_columns = {}
-
+from shared_data import table_columns,table_keys
+#create table table_name(id int key not_null, name varchar(20) not_key not_null); 对应field字段每一个属性
 def create_table(table_name, columns:field.Field):
     #columns[0].name
-    print(columns[0].name)#参数可以传递 类型是field
+    print(columns[0].name)#参数可以传递 类型是field  {table_name:'columns[0].name'}
     print(vars(columns[0]))
+
+    column_name = []
+    for column in columns:
+        column_name.append(column[0].name)
+    print(column_name)
+
     directory = "dir/user_default/db0"  # 目标目录
     table_directory = os.path.join(directory, table_name)
+
+    # 更新 table_columns
+    if table_name not in table_columns:
+        column_names = [column.name for column in columns[0]]
+        table_columns[table_name] = column_names
+
+    # 更新 table_keys
+    primary_key = find_id_with_primary_key(columns[0])  # 假设这里有一个函数可以找到主键
+    table_keys[table_name] = primary_key
+
     if  os.path.exists(table_directory):
         print(f'Table {table_name} already exists')
     else:
         test_table= table_format.Table(table_name,columns)
         test_table.save()
+
 
 
 def find_id_with_primary_key(datas, primary_key_value):
@@ -163,7 +177,7 @@ def delete_column(table_name, column_name):
 
 def create_table_main():
     #理想中的sql语句
-    #create table table_name(id int key not_null, name varchar(20) not_key not_null); 对应field字段每一个属性
+
     global fields, table_name
     while True:
         user_input = input("Enter command: ")
@@ -251,7 +265,3 @@ def create_table_main():
                 print("Invalid rename table command")
         else:
             print('Invalid command')
-
-
-if __name__ == '__main__':
-    create_table_main()

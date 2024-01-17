@@ -1,0 +1,14 @@
+[
+    {
+        "name": "column1",
+        "data_type": "int",
+        "primary_key": "key",
+        "null_flag": "not_null"
+    },
+    {
+        "name": "column2",
+        "data_type": "varchar(20)",
+        "primary_key": "not_key",
+        "null_flag": "not_null"
+    }
+]
