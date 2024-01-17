@@ -1,7 +1,7 @@
 import tkinter as tk
+from tkinter import messagebox, ttk
 import json
-from tkinter import ttk
-from select_table import *
+from select_table import execute_sql_query
 
 #select * from student inner join grade on name where score>89
 #select * from student inner join grade on name
@@ -10,20 +10,18 @@ from select_table import *
 #select name,age from student
 #select name,age,score,id from student inner join grade on name where score>89 order by age asc
 
-# 执行按钮的点击事件处理函数
-def execute_button_clicked():
-    sql_query = sql_entry.get()  # 获取输入框中的 SQL 语句
-    results = execute_sql_query(sql_query)  # 调用相关函数执行 SQL 查询
-    display_results_in_table(results)  # 将查询结果显示在表格中
-    print(json.dumps(results, indent=2))
 
-# 在表格中显示查询结果
-def display_results_in_table(results):
-    # 清空表格
+def validate_login(username, password):
+    with open('users.json') as f:
+        users = json.load(f)
+        if username in users and users[username]['password'] == password:
+            return True
+    return False
+
+def display_results_in_table(results, result_tree):
     for row in result_tree.get_children():
         result_tree.delete(row)
 
-    # 动态创建表头
     if results:
         headers = list(results[0].keys())
         result_tree['columns'] = headers
@@ -34,21 +32,54 @@ def display_results_in_table(results):
             values = [result[header] for header in headers]
             result_tree.insert('', tk.END, values=values)
 
-# 创建主窗口
+def login_button_clicked(username_entry, password_entry, root):
+    username = username_entry.get()
+    password = password_entry.get()
+    if validate_login(username, password):
+        root.destroy()
+        create_main_window()
+    else:
+        messagebox.showerror("Error", "Invalid username or password")
+
+def execute_button_clicked(sql_entry, result_tree):
+    sql_query = sql_entry.get()
+    results = execute_sql_query(sql_query)
+    display_results_in_table(results, result_tree)
+    print(json.dumps(results, indent=2))
+
+def create_main_window():
+    root = tk.Tk()
+    root.title("SQL Query Executor")
+
+    sql_entry = tk.Entry(root, width=100)
+    sql_entry.pack(pady=10)
+
+    execute_button = tk.Button(root, text="Execute", command=lambda: execute_button_clicked(sql_entry, result_tree))
+    execute_button.pack()
+
+    result_tree = ttk.Treeview(root, show="headings")
+    result_tree.pack()
+
+    root.mainloop()
+
 root = tk.Tk()
-root.title("SQL Query Executor")
+root.title("Login")
+root.geometry("300x150")
 
-# 创建输入框
-sql_entry = tk.Entry(root, width=100)
-sql_entry.pack(pady=10)
+frame = tk.Frame(root)
+frame.pack(pady=20)
 
-# 创建执行按钮
-execute_button = tk.Button(root, text="Execute", command=execute_button_clicked)
-execute_button.pack()
+username_label = tk.Label(frame, text="Username")
+username_label.grid(row=0, column=0)
+username_entry = tk.Entry(frame)
+username_entry.grid(row=0, column=1)
 
-# 创建表格
-result_tree = ttk.Treeview(root, show="headings")
-result_tree.pack()
+password_label = tk.Label(frame, text="Password")
+password_label.grid(row=1, column=0)
+password_entry = tk.Entry(frame, show="*")
+password_entry.grid(row=1, column=1)
 
-# 运行主循环
+login_button = tk.Button(root, text="Login", command=lambda: login_button_clicked(username_entry, password_entry, root))
+login_button.pack()
+
 root.mainloop()
