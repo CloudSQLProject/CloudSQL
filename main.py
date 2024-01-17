@@ -110,5 +110,14 @@ if __name__ == "__main__":
         elif command.startswith("exit"): #退出
             loginFlag = False
             break
-        elif command.startswith("table"):
-            create_table_main()
+        elif command.startswith("update"):
+            if loginFlag:
+                create_table_main()
+            else:
+                print("Please login first")
+
+        elif command.startswith("handle"):
+            if loginFlag:
+                handle_update_sql()
+            else:
+                print("Please login first")

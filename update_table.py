@@ -2,9 +2,8 @@ import copy
 import json
 import os
 import re
-
-from CloudSQL.select_table import apply_condition
-from CloudSQL.shared_data import table_keys, table_columns
+from select_table import apply_condition
+from shared_data import table_keys, table_columns
 
 
 def type_legal(value, key):
@@ -153,35 +152,37 @@ def update_part(table_name, condition,
         print(f'update successful:{len(contents)} rows updated')
 
 
-def handle_update_sql(sql):
-    """ 分析 update 语法"""
-    is_all = False
-    table_name = ''
-    condition = ''
-    natures = ''
-    pattern_one = 'update ([a-z0-9_]+) set (.+) where (.+)'
-    pattern_two = 'update ([a-z0-9_]+) set (.+)'
-    if not re.match(pattern_one, sql):
-        if not re.match(pattern_two, sql):
-            print("command error ")
-            return
+def handle_update_sql()->None:
+    while True:
+        sql = input("Enter Command:")
+        """ 分析 update 语法"""
+        is_all = False
+        table_name = ''
+        condition = ''
+        natures = ''
+        pattern_one = 'update ([a-z0-9_]+) set (.+) where (.+)'
+        pattern_two = 'update ([a-z0-9_]+) set (.+)'
+        if not re.match(pattern_one, sql):
+            if not re.match(pattern_two, sql):
+                print("command error ")
+                return
+            else:
+                is_all = True
+                table_name = re.match(pattern_two, sql).group(1)
+                natures = re.match(pattern_two, sql).group(2)
         else:
-            is_all = True
-            table_name = re.match(pattern_two, sql).group(1)
-            natures = re.match(pattern_two, sql).group(2)
-    else:
-        table_name = re.match(pattern_one, sql).group(1)
-        natures = re.match(pattern_one, sql).group(2)
-        condition = re.match(pattern_one, sql).group(3)
-    if not os.path.exists(f'./dir/user_default/db0/{table_name}/{table_name}.json'):
-        print('Table does not exist')
-    # 更新全部数据
-    if is_all:
-        update_all(table_name, natures)
-    else:
-        # where p = q
-        update_part(table_name, condition, natures)
-        return
+            table_name = re.match(pattern_one, sql).group(1)
+            natures = re.match(pattern_one, sql).group(2)
+            condition = re.match(pattern_one, sql).group(3)
+        if not os.path.exists(f'./dir/user_default/db0/{table_name}/{table_name}.json'):
+            print('Table does not exist')
+        # 更新全部数据
+        if is_all:
+            update_all(table_name, natures)
+        else:
+            # where p = q
+            update_part(table_name, condition, natures)
+            return
 
 # 正确情况
 # handle_update_sql("update student set name='gentleman',age=22 where id<3")
@@ -190,8 +191,3 @@ def handle_update_sql(sql):
 # 错误情况
 # handle_update_sql("update student set name='TOM',age='Alice' where id=1")
 # 提示age want int
-
-if __name__ == "__main__":
-    while True:
-        sql_input = input()
-        handle_update_sql(sql_input)
