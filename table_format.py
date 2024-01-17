@@ -24,11 +24,6 @@ class Table:
         # 如果没有,创建文件,已有文件则追加写入数据
         file_path = os.path.join(table_directory, self.table_name + ".json")
         with open(file_path, 'a' if os.path.exists(self.table_name + ".json") else 'w') as f:# 追加写入数据
-            #if not os.path.exists(file_path) or os.path.getsize(file_path) == 0:
-                # for column in self.columns:
-                #     print("写入表名")
-                #    # f.write(column.name+' ')
-                # f.write('\n'
             init_data=[]
             json.dump(init_data,f)
             for row in self.data:

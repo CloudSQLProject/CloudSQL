@@ -1,0 +1,14 @@
+[
+    {
+        "name": "id",
+        "data_type": "int",
+        "primary_key": "key",
+        "null_flag": "not_null"
+    },
+    {
+        "name": "name",
+        "data_type": "varchar(20)",
+        "primary_key": "not_key",
+        "null_flag": "not_null"
+    }
+]

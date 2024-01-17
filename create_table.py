@@ -15,20 +15,18 @@ def create_table(table_name, columns:field.Field):
 
     column_name = []
     for column in columns:
-        column_name.append(column[0].name)
+        column_name.append(column.name)
     print(column_name)
+    meta={table_name:column_name}
+    meta_key={table_name:columns[0].name}
+    print(meta)
+    print(meta_key)
+    table_columns.update(meta)
+    table_keys.update(meta_key)
 
     directory = "dir/user_default/db0"  # 目标目录
     table_directory = os.path.join(directory, table_name)
 
-    # 更新 table_columns
-    if table_name not in table_columns:
-        column_names = [column.name for column in columns[0]]
-        table_columns[table_name] = column_names
-
-    # 更新 table_keys
-    primary_key = find_id_with_primary_key(columns[0])  # 假设这里有一个函数可以找到主键
-    table_keys[table_name] = primary_key
 
     if  os.path.exists(table_directory):
         print(f'Table {table_name} already exists')

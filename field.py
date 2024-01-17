@@ -1,6 +1,4 @@
 import json
-
-
 class Field:
     """
            构造函数，用于初始化表的列对象
