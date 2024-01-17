@@ -23,7 +23,6 @@ def create_table(table_name, columns):
         test_table.save()
 
 
-
 def find_id_with_primary_key(datas, primary_key_value):
     for data in datas:
         if data.get('primary_key') == 'key':
