@@ -4,34 +4,22 @@ import re
 import field
 import table_format
 import shutil
-table_keys = {}
-table_columns = {}
+import pickle
 from shared_data import table_columns,table_keys
+from collections import defaultdict
 #create table table_name(id int key not_null, name varchar(20) not_key not_null); 对应field字段每一个属性
-def create_table(table_name, columns:field.Field):
-    #columns[0].name
-    print(columns[0].name)#参数可以传递 类型是field  {table_name:'columns[0].name'}
-    print(vars(columns[0]))
-
-    column_name = []
-    for column in columns:
-        column_name.append(column.name)
-    print(column_name)
-    meta={table_name:column_name}
-    meta_key={table_name:columns[0].name}
-    print(meta)
-    print(meta_key)
-    table_columns.update(meta)
-    table_keys.update(meta_key)
-
-    directory = "dir/user_default/db0"  # 目标目录
-    table_directory = os.path.join(directory, table_name)
 
 
-    if  os.path.exists(table_directory):
-        print(f'Table {table_name} already exists')
+def create_table(table_name, columns):
+    column_names = [column.name for column in columns]
+    table_columns[table_name] = column_names
+    table_keys[table_name] = columns[0].name
+
+    table_directory = f"dir/user_default/db0/{table_name}"
+    if os.path.exists(table_directory):
+        print(f"Table {table_name} already exists")
     else:
-        test_table= table_format.Table(table_name,columns)
+        test_table = table_format.Table(table_name, columns)
         test_table.save()
 
 
