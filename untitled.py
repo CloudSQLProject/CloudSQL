@@ -31,7 +31,6 @@ def display_results_in_table(results, result_tree):
         for result in results:
             values = [result[header] for header in headers]
             result_tree.insert('', tk.END, values=values)
-
 def login_button_clicked(username_entry, password_entry, root):
     username = username_entry.get()
     password = password_entry.get()
